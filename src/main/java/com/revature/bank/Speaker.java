@@ -1,7 +1,10 @@
 package com.revature.bank;
 
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,14 +39,14 @@ public class Speaker { // change to singleton
 		this.transactionService = TransactionService.getService();
 	}
 
-	public Speaker getSpeaker() {
+	public static Speaker getSpeaker() {
 		if (speaker == null) {
 			speaker = new Speaker();
 		}
 		return speaker;
 	}
 
-	public void action() throws CancelException{
+	public void start() throws CancelException{
 		Scanner scanner = new Scanner(System.in);
 		entry(scanner);
 		// user should be logged in now
@@ -61,54 +64,63 @@ public class Speaker { // change to singleton
 
 	private void performAction(Scanner scanner) throws CancelException{
 		while(currentUser.isLoggedIn()) {
-			System.out.println("Enter a command or type 'help' for more info.");
+			System.out.println("> Enter a command or type 'help' for more info.\n");
 			String input = scanner.nextLine().trim();
 			try {
 				input = decipher(input);
 
 				if(currentUser.isSuperUser()) { // superuser commands
 					switch(input) {
-					case "createuser": createUser();
+					case "createuser": createUser(scanner);
 					break;
-					case "viewusers": viewUsers();
+					case "viewusers": viewUsers(scanner);
 					break;
-					case "viewuser": viewUser();
+					case "viewuser": viewUser(scanner);
 					break;
-					case "edituser": editUser();
+					case "edituser": editUser(scanner);
 					break;
-					case "deleteuser": deleteUser();
+					case "deleteuser": deleteUser(scanner);
 					break;
+					case "help":
+						System.out.println("The following are valid commands:"
+								+ "'create user', 'view users'/'view all', "
+								+ "'view user'/'view one', 'edit user', 'delete user'\n");
+						break;
 					case "logout": System.out.println("Goodbye.");
+					log.traceExit("Superuser logged out");
 					throw new CancelException("Superuser logged out.");
 					default: log.traceExit("Should never reach this point.");
-						break;
+					break;
 					}
 				}
 
 				else { // normal user commands
 					switch(input) {
-					case "getbalances": getBalances();
+					case "getbalances": getBalances(scanner);
 					break;
-					case "getbalance": getBalance();
+					case "getbalance": getBalance(scanner);
 					break;
-					case "createaccount": createAccount();
+					case "createaccount": createAccount(scanner);
 					break;
-					case "deleteaccount": deleteAccount();
+					case "deleteaccount": deleteAccount(scanner);
 					break;
-					case "transfer": transferMoney();
+					case "transfer": transferMoney(scanner);
 					break;
-					case "deposit": deposit();
+					case "deposit": deposit(scanner);
 					break;
-					case "withdraw": withdraw();
+					case "withdraw": withdraw(scanner);
 					break;
-					case "viewaccount": viewAccount();
+					case "viewhistory": viewHistory(scanner);
 					break;
-					case "viewaccounts": viewAccounts();
-					break;
-					case "viewhistory": viewHistory();
-					break;
+					case "help":
+						System.out.println("The following are valid commands: "
+								+ "'view all balances'/'view all', 'view one balance'/'view one',"
+								+ "'create account', 'delete account', 'transfer', 'deposit',"
+								+ " 'withdraw', 'viewhistory'\n");
+						break;
 					case "logout": 
 						System.out.println("Goodbye.");
+						log.traceExit("user logged out");
 						throw new CancelException("User logged out.");
 					default: log.traceExit("Should never reach this point.");
 					break;
@@ -120,126 +132,523 @@ public class Speaker { // change to singleton
 		}
 	}
 
-	private void viewHistory() {
+	private void viewHistory(Scanner scanner) {
+		log.traceEntry();
+		String input = "";
 		try {
+			System.out.println("Would you like to view 'all' transaction history, or just "
+					+ "a 'single' account?");
+			input = normalize(scanner.nextLine());
+			if ("cancel".equals(input)) throw new CancelException();
 
+			switch(input) {
+			case "all":
+			case "al":
+			case "a":
+			case "'all'":
+				System.out.println(transactionService.getTransactionsByUser(currentUser.getUserID()).get());
+				break;
+			case "'single'":
+			case "s":
+			case "single":
+			case "one":
+			case "account":
+				Map<String, Double> userBalances = null;
+				Set<String> accountNames = null; 
+				BankAccount userAccount = null;
+				System.out.println("Your accounts are displayed below. Enter the name of the account"
+						+ "you would like to view. Otherwise, type anything and your "
+						+ "primary account will be chosen by default. These are CASE SENSITIVE. (Type 'cancel' to exit.)");
+				userBalances = userService.getBalances(currentUser.getUserID()).get();
+				accountNames = userBalances.keySet();
+				System.out.println(accountNames);
+
+				input = scanner.nextLine();
+				if ("cancel".equals(normalize(input))) throw new CancelException();
+
+				if (!accountNames.contains(input)) {
+					// set account name to default.
+					userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();
+
+				} else {
+					userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+				}
+				System.out.println("Your transaction history for " + userAccount.getAccountName() +
+						"is displayed below: ");
+				System.out.println(transactionService.getTransactionsByAccount(userAccount.getAccountID()).get());
+				log.traceExit("Successfully returned transaction history of a single account.");
+			}
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
+		} catch(NoSuchElementException e) {
+			System.out.println("No transaction history available.");
+			log.traceExit(e);
 		}
 	}
 
-	private void viewAccounts() {
-		try {
+	private void withdraw(Scanner scanner) {
+		log.traceEntry();
+		Map<String, Double> userBalances = null;
+		Set<String> accountNames = null; 
+		String input = "";
+		Double withdrawlAmount;
+		BankAccount userAccount = null;
 
+		try {
+			System.out.println("Your accounts are displayed below. Enter the name of the account "
+					+ "from which you would like to withdraw. \nOtherwise, type anything and your "
+					+ "primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)");
+			userBalances = userService.getBalances(currentUser.getUserID()).get();
+			accountNames = userBalances.keySet();
+			System.out.println(accountNames);
+
+			input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) throw new CancelException();
+
+			if (!accountNames.contains(input)) {
+				// set account name to default.
+				userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();
+
+			} else {
+				userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+			}
+
+			while(true) {
+				try {
+					System.out.println("How much would you like to withdraw from " + input + "?");
+					withdrawlAmount = Double.parseDouble(scanner.nextLine());
+					if (withdrawlAmount > userAccount.getBalance()) {
+						System.out.println("You don't have sufficient funds.");
+						continue;
+					}
+					bankAccountService.withdraw(userAccount.getAccountID(), withdrawlAmount);
+					log.traceExit("User withdrew " + -withdrawlAmount + " from " + userAccount.getAccountName());
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+					System.out.println("Here is your money. Your remaining balance is " + 
+							(userAccount.getBalance() - withdrawlAmount));
+					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+					break;
+				} catch (NumberFormatException e) {
+					log.traceExit(e);
+					throw new CancelException("Number format");
+				}
+			}
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
+		} catch(NoSuchElementException e) {
+			System.out.println("You don't have any balances! You must create an account first!");
+			log.traceExit("User tried to withdraw despite having no account.");
 		}
 	}
 
-	private void viewAccount() {
+	private void deposit(Scanner scanner) {
+		log.traceEntry();
+		Map<String, Double> userBalances = null;
+		Set<String> accountNames = null; 
+		String input = "";
+		BankAccount userAccount = null;
+		Double depositAmount;
+
 		try {
+			System.out.println("Your accounts are displayed below. Enter the name of the account "
+					+ "into which you would like to deposit. \nOtherwise, type anything and your "
+					+ "primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)");
+			userBalances = userService.getBalances(currentUser.getUserID()).get();
+			accountNames = userBalances.keySet();
+			System.out.println(accountNames);
+
+			input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) throw new CancelException();
+
+			if (!accountNames.contains(input)) {
+				// set account name to default.
+				userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();
+
+			} else {
+				userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+			}
+
+			System.out.println("How much would you like to deposit into " + userAccount.getAccountName() + "?");
+			input = scanner.nextLine();
+			try {
+				depositAmount = Double.parseDouble(input);
+				bankAccountService.deposit(userAccount.getAccountID(), depositAmount);
+				System.out.println("Successfully deposited $" + depositAmount + " into " + userAccount.getAccountName());
+				log.traceExit("Successfully deposited $" + depositAmount + " into " + userAccount.getAccountName());
+			} catch(NumberFormatException e) {
+				log.traceExit(e);
+				throw new CancelException("User has no money to deposit.");
+			}
 
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
+		} catch(NoSuchElementException e) {
+			System.out.println("You must first create an account before making a deposit.");
+			log.traceExit("User tried to make a deposit without an account");
 		}
 	}
 
-	private void withdraw() {
+	private void transferMoney(Scanner scanner) {
+		log.traceEntry();
+		Map<String, Double> userBalances = null;
+		Set<String> accountNames = null; 
+		String input = "";
+		BankAccount firstAccount = null;
+		BankAccount secondAccount = null;
+		Double transferAmount;
 		try {
+			System.out.println("Your accounts are displayed below. Enter the name of the account "
+					+ "FROM which you would like to withdraw. \nOtherwise, type anything and your "
+					+ "primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)");
+			userBalances = userService.getBalances(currentUser.getUserID()).get();
+			if (userBalances.size() < 2) throw new NoSuchElementException("Only 1 account.");
+
+			accountNames = userBalances.keySet();
+			System.out.println(accountNames);
+
+			input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) throw new CancelException();
+
+			if (!accountNames.contains(input)) {
+				// set account name to default.
+				firstAccount = bankAccountService.getAccount(currentUser.getUserID()).get();
+
+			} else {
+				firstAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+			}
+
+			while(true) {
+				try {
+					System.out.println("How much would you like to withdraw from " + input + "?");
+					transferAmount = Double.parseDouble(scanner.nextLine());
+					if (transferAmount > firstAccount.getBalance()) {
+						System.out.println("You don't have sufficient funds.");
+						continue;
+					}
+					log.trace("User has sufficient funds to make a transfer.");
+					break;
+				} catch (NumberFormatException e) {
+					log.traceExit(e);
+					throw new CancelException("Number format");
+				}
+			}
+
+			System.out.println("Enter the name of the account "
+					+ "into which you would like to deposit. \nOtherwise, type anything and your "
+					+ "primary account will be chosen by default.(Type 'cancel' to exit.)");
+			System.out.println("Account names (case sensitive): \n" + accountNames);
+
+			input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) throw new CancelException();
+
+			if (!accountNames.contains(input)) {
+				// set account name to default.
+				secondAccount = bankAccountService.getAccount(currentUser.getUserID()).get();
+
+			} else {
+				secondAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+			}
+
+			if (firstAccount.equals(secondAccount)) {
+				System.out.println("You can't transfer from an account to the same account.");
+				log.traceExit("User tried to transfer from an account to the same account");
+				throw new CancelException("Same account.");
+			}
+
+			// good to go on the transfer:
+			userService.transfer(currentUser.getUserID(), firstAccount.getAccountName(),
+					secondAccount.getAccountName(), transferAmount);
+			System.out.println("Transfer of " + transferAmount + " was successful!");
+			log.traceExit("Transfer of " + transferAmount + " was successful!");
 
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
+		} catch(NoSuchElementException e) {
+			System.out.println("You need at least 2 accounts to transfer between them");
+			log.traceExit("User doesnt have 2+ accounts.");
 		}
 	}
 
-	private void deposit() {
+	private void deleteAccount(Scanner scanner) {
+		log.traceEntry();
+		Map<String, Double> userBalances = null;
+		Set<String> accountNames = null; 
+		String input = "";
+		BankAccount userAccount = null;
 		try {
+			System.out.println("Your accounts are displayed below. Enter the name of the account "
+					+ "you would like to DELETE. \nThese are case sensitive. "
+					+ "Note that this action is PERMANENT. \n"
+					+ "Ensure that all funds are transferred off the account"
+					+ "before deletion. (Type 'cancel' to exit.)");
+			userBalances = userService.getBalances(currentUser.getUserID()).get();
+			accountNames = userBalances.keySet();
+			System.out.println(accountNames);
+
+			input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) throw new CancelException();
+
+			userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+
+			if (userAccount.getBalance() > 0) {
+				System.out.println("This account has a balance of $" + userAccount.getBalance() + ". "
+						+ "Please transfer or withdraw this before deletion.");
+				throw new CancelException("User has funds remaining on the account");
+			}
+			System.out.println("Are you ABSOLUTELY SURE that you want to delete " + input + "? ('yes' or 'no')");
+			input = normalize(scanner.nextLine());
+			switch(input) {
+			case "yes":
+			case "ye":
+			case "yeah":
+			case "y":
+			case "1":
+			case "'yes'":
+				break;
+			default: throw new CancelException("User changed their mind");
+			}
+
+			userService.deleteAccount(currentUser.getUserID(), userAccount.getAccountName());
+			System.out.println(userAccount.getAccountName() + " successfully deleted.");
+			log.traceExit(userAccount.getAccountName() + " successfully deleted.");
+		} catch(CancelException e) {
+			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
+		} catch(NoSuchElementException e) {
+			System.out.println("No account exists with that name.");
+			log.traceExit(e);
+		}
+	}
+
+	private void createAccount(Scanner scanner) {
+		log.traceEntry();
+		String accountName = "";
+		double initialDeposit;
+		try {
+			System.out.println("Please enter a name for you account.");
+			accountName = scanner.nextLine();
+			if ("cancel".equals(normalize(accountName))) throw new CancelException();
+
+			System.out.println("Please enter an initial deposit (optional)");
+			try {
+				initialDeposit = Double.parseDouble(scanner.nextLine());
+				initialDeposit = (initialDeposit < 0) ? 0 : initialDeposit;
+			} catch(NumberFormatException e) {
+				initialDeposit = 0;
+			}
+
+			userService.createAccount(currentUser.getUserID(), initialDeposit, accountName);
+			log.traceExit("User successfully created an account: " + accountName);
+			System.out.println(accountName + " successfully created! Your balance is " + initialDeposit);
 
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
 		}
 	}
 
-	private void transferMoney() {
+	private void getBalance(Scanner scanner) {
+		log.traceEntry();
+		Map<String, Double> userBalances = null;
+		Set<String> accountNames = null; 
+		String input = "";
+		BankAccount userAccount = null;
 		try {
+			System.out.println("Your account names are displayed below. Enter the name of the account "
+					+ "you would like to view.\n Otherwise, type anything and your "
+					+ "primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)\n");
+			userBalances = userService.getBalances(currentUser.getUserID()).get();
+			if (userBalances.size() == 0) throw new NoSuchElementException("No balances"); // safety net
 
+			accountNames = userBalances.keySet();
+			System.out.println(accountNames);
+
+			input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) throw new CancelException();
+
+			if (!accountNames.contains(input)) {
+				// set account name to default.
+				userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();
+
+			} else {
+				userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();
+			}
+
+			System.out.println("You account information is displayed below: \n");
+			System.out.println(userAccount + "\n");
+			log.traceExit(userAccount);
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
+		} catch(NoSuchElementException e) {
+			System.out.println("You don't have any accounts!");
+			log.traceExit(e);
 		}
 	}
 
-	private void deleteAccount() {
+	private void getBalances(Scanner scanner) {
+		log.traceEntry();
 		try {
-
-		} catch(CancelException e) {
-			System.out.println("Cancelled action.\n");
+			System.out.println("The following balances were found for " + currentUser.getUsername() + ": \n");
+			System.out.println(userService.getBalances(currentUser.getUserID()).get());
+		} catch (NoSuchElementException e) {
+			System.out.println("No balances to display.");
+			log.traceExit(e);
 		}
+		log.traceExit();
 	}
 
-	private void createAccount() {
+
+	// superuser
+	private void deleteUser(Scanner scanner) {
+		log.traceEntry();
+		String doomedUser = "";
+		boolean repeat = true;
 		try {
+			do {
+				System.out.println("Enter the name of the user you would like to delete, or 'cancel'.");
+				doomedUser = scanner.nextLine();
+				if ("cancel".equals(doomedUser)) throw new CancelException();
 
+				repeat = !superUserService.deleteUser(doomedUser);
+			} while (repeat);
+			log.traceExit("Successfully deleted user");
 		} catch(CancelException e) {
-			System.out.println("Cancelled action.\n");
-		}
-	}
-
-	private void getBalance() {
-		try {
-
-		} catch(CancelException e) {
-			System.out.println("Cancelled action.\n");
-		}
-	}
-
-	private void getBalances() {
-		try {
-
-		} catch(CancelException e) {
-			System.out.println("Cancelled action.\n");
-		}
-	}
-
-	private void deleteUser() {
-		try {
-
-		} catch(CancelException e) {
+			log.traceExit(e);
 			System.out.println("Cancelled action.\n");
 		}	
 	}
 
-	private void editUser() {
+	private void editUser(Scanner scanner) {
+		log.traceEntry();
+		String thisUsername = null;
+		boolean repeat = true;
+		Optional<User> userOpt = Optional.empty();
 		try {
+			do {
+				System.out.println("Enter the name of the user you would like to delete, or 'cancel'.");
+				thisUsername = scanner.nextLine();
+				if ("cancel".equals(thisUsername)) throw new CancelException();
+
+				userOpt = superUserService.viewUser(thisUsername);
+				if (!userOpt.isPresent()) {
+					System.out.println("Username is not present in our system. Check your spelling and try again.");
+					continue;
+				}
+
+				// user DOES exist in DB
+
+				while(true) {
+					System.out.println("Would you like to edit this user's 'username' " + thisUsername +
+							"or their 'password' " + userOpt.get().getPassword() + "?");
+					String input = normalize(scanner.nextLine());
+					if ("cancel".equals(input)) break;
+					switch(input) {
+					case "un":
+					case "username":
+					case "name":
+					case "user":
+						while (true) {
+							System.out.println("Enter a new username for this user.");
+							input = scanner.nextLine();
+							if (superUserService.changeUsername(thisUsername, input)) {
+								repeat = false; // entire method was a success
+								System.out.println("Successfully changed " + thisUsername + "'s username to " + input);
+								log.traceExit("Successfully changed a username");
+								break; // break if new username is unique
+							}
+							System.out.println("Duplicate username in database. Please try again.");
+						}
+						break;
+					case "pw":
+					case "password":
+					case "pass":
+					case "word":
+						System.out.println("Enter a new password for this user.");
+						input = scanner.nextLine();
+						superUserService.changePassword(thisUsername, input);
+						repeat = false;
+						System.out.println("Successfully changed " + thisUsername + "'s password.");
+						log.traceExit("Successfully changed a password");
+						break;
+					default: System.out.println("I didn't understand that. Please try again.");
+					continue;
+					}
+					break; // only occurs if
+				}
+			} while(repeat);
 
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
 		}
 
 	}
 
-	private void viewUser() {
+	private void viewUser(Scanner scanner) {
+		log.traceEntry();
+		String input = "";
+		Optional<User> userOpt = Optional.empty();
 		try {
+			while(true) {
+				System.out.println("Enter the name of the user you would like to view.");
+				input = normalize(scanner.nextLine());
+				if ("cancel".equals(input)) throw new CancelException();
 
+				userOpt = superUserService.viewUser(input);
+				if (!userOpt.isPresent()) { // user doesnt exist in db
+					System.out.println("User doesn't exist in database. Check your spelling and try again.");
+					continue;
+				}
+
+				// user IS present:
+				System.out.println("User was found in the database: ");
+				System.out.println(userOpt.get());
+				log.traceExit("User found in database.");
+				break;
+			}
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
 		}
 
 	}
 
-	private void viewUsers() {
-		try {
-
-		} catch(CancelException e) {
-			System.out.println("Cancelled action.\n");
-		}
-
+	private void viewUsers(Scanner scanner) {
+		log.traceEntry();
+		System.out.println("Here are all users in the database: ");
+		System.out.println(superUserService.viewUsers().get());
+		log.traceExit();
 	}
 
-	private void createUser() {
+	private void createUser(Scanner scanner) {
+		log.traceEntry();
+		String username_in = "";
+		String password_in = "";
 		try {
-
+			while(true) {
+				System.out.println("Enter a usename for the new user: ");
+				username_in = scanner.nextLine();
+				if ("cancel".equals(normalize(username_in))) throw new CancelException("cancelled @ username");
+				if (superUserService.viewUser(username_in).isPresent()) {
+					System.out.println("User already exists in the database. Please choose a UNIQUE username.");
+					continue;
+				}
+				System.out.println("Enter a password for the new user: ");
+				if ("cancel".equals(normalize(password_in))) throw new CancelException("cancelled @ password");
+				password_in = scanner.nextLine();
+				superUserService.createUser(username_in, password_in);
+				System.out.println("Successfully created " + username_in);
+				log.traceExit("Successfully created " + username_in);
+				break;
+			}
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
+			log.traceExit(e);
 		}
 
 	}
@@ -253,7 +662,7 @@ public class Speaker { // change to singleton
 			}
 			try {
 				input = decipher(input);
-				if (input.equals("log in")){
+				if (input.equals("login")){
 					login(scanner);
 				} else if (input.equals("register")){
 					register(scanner);
@@ -294,9 +703,10 @@ public class Speaker { // change to singleton
 						currentUser.setLoggedIn(true);
 						System.out.println("Successfully logged in as superuser " + username + ".");
 						log.traceExit();
+						break;
 					}
 				}
-				if (UserService.getService().getUser(username).isPresent()){
+				if (userService.getUser(username).isPresent()){ // optimize this?
 					existingUser = UserService.getService().getUser(username).get(); 
 					if (password.equals(existingUser.getPassword())) { // correct PW!
 						currentUser.setUsername(username);
@@ -306,6 +716,7 @@ public class Speaker { // change to singleton
 						currentUser.setLoggedIn(true);
 						System.out.println("Successfully logged in as " + username + ".");
 						log.traceExit();
+						break;
 					}
 				}
 
@@ -351,7 +762,9 @@ public class Speaker { // change to singleton
 
 	private String decipher(String gibberish) throws CancelException, InvalidInputException{
 		gibberish = normalize(gibberish); // no spaces, all lower case
-		if (!currentUser.isLoggedIn()) {
+		if ("cancel".equals(gibberish)) throw new CancelException();
+
+		if (!currentUser.isLoggedIn()) { // not logged in
 			switch(gibberish) {
 			case "login": 
 			case "logon":
@@ -359,8 +772,8 @@ public class Speaker { // change to singleton
 			case "log":
 			case "existing":
 			case "current":
-				return "log in";
 			case "l":
+				return "login";
 			case "register": 
 			case "reg": 
 			case "registor":
@@ -370,14 +783,41 @@ public class Speaker { // change to singleton
 				return "register";
 			case "break":
 			case "quit":
-			case "cancel": throw new CancelException();
 			default: throw new InvalidInputException();
 			}
 		}
-		if (currentUser.isSuperUser()) { // ADD A BUNCH OF STUFF TO ME
+		if (currentUser.isSuperUser()) { // superusers only
 			switch(gibberish) {
 			case "createuser":
-			return "createuser";
+			case "create":
+			case "c":
+			case "newuser":
+			case "new":
+				return "createuser";
+			case "viewusers":
+			case "view":
+			case "viewall":
+			case "all":
+				return "viewusers";
+			case "viewuser":
+			case "single":
+			case "viewone":
+			case "viewspecific":
+				return "viewuser";
+			case "edituser":
+			case "edit":
+			case "e":
+				return "edituser";
+			case "deleteuser":
+			case "delete":
+			case "del":
+			case "d":
+				return "deleteuser";
+			case "help":
+			case "h":
+			case "man":
+			case "?":
+				return "help";
 			case "logout":
 			case "log":
 			case "out":
@@ -388,10 +828,77 @@ public class Speaker { // change to singleton
 			default:
 				throw new InvalidInputException();
 			}
-		} else { // ADD A BUNCH OF STUFF
-			return gibberish;
+		} else { // Normal user
+			switch(gibberish) {
+			case "getbalances":
+			case "balances":
+			case "viewall":
+			case "viewallbalances":
+			case "all":
+			case "viewbalances":
+				return "getbalances";
+			case "view":
+			case "getbalance":
+			case "single":
+			case "viewbalance":
+			case "one":
+			case "viewonebalance":
+			case "viewone":
+			case "getsinglebalance":
+			case "getsingle":
+			case "viewsingle":
+				return "getbalance";
+			case "createaccount":
+			case "create":
+			case "new":
+			case "newaccount":
+			case "newbalance":
+				return "createaccount";
+			case "deleteaccount":
+			case "delete":
+			case "remove":
+			case "del":
+			case "removeaccount":
+			case "delaccount":
+				return "deleteaccount";
+			case "transfer":
+			case "transferfunds":
+			case "transfermoney":
+			case "t":
+			case "tr":
+				return "transfer";
+			case "deposit":
+			case "d":
+			case "depo":
+			case "drop":
+			case "give":
+			case "deposits":
+				return "deposit";
+			case "withdraw":
+			case "take":
+			case "w":
+				return "withdraw";
+			case "viewhistory":
+			case "history":
+			case "transactionhistory":
+			case "transaction":
+			case "transactions":
+				return "viewhistory";
+			case "help":
+			case "h":
+			case "man":
+			case "?":
+				return "help";
+			case "logout":
+			case "log":
+			case "out":
+			case "cancel":
+			case "break":
+			case "l":
+				return "logout";
+			default: throw new InvalidInputException();
+			}
 		}
-
 	}
 
 	private void reset() {
@@ -401,7 +908,5 @@ public class Speaker { // change to singleton
 	private String normalize(String s) { // used to fix user input
 		return s.replaceAll(" ","").toLowerCase();
 	}
-
-
 
 }

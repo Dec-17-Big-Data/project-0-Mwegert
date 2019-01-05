@@ -12,5 +12,5 @@ public interface SuperUserDao {
 	
 	boolean changeUsername(String username, String newUsername);
 	boolean changePassword(String username, String newPassword);
-	void deleteUser(String username);
+	boolean deleteUser(String username);
 }

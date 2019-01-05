@@ -39,8 +39,9 @@ create sequence user_id_counter start with 1 increment by 1;
 create sequence account_id_counter start with 1 increment by 1;
 create sequence transaction_id_counter start with 1 increment by 1;
 
+select * into transactions from transactions order by transaction_id;
 
-
+select * from transactions order by transaction_id;
 
 create or replace procedure addSuperUser(nameinput varchar2, pw varchar2) as
 begin
@@ -48,6 +49,7 @@ begin
 end addSuperUser;
 /
 
+call addSuperUser('wegert','admin');
 create or replace procedure viewSuperUser(username_INPUT varchar2, superuser_ID_OUTPUT out number, password_OUTPUT out varchar2) as
 begin
     select superuser_ID into superuser_ID_OUTPUT from superusers where username = username_INPUT;
@@ -252,6 +254,14 @@ begin
 end getAccount;
 /
 
+create or replace procedure getMaxAccount(account_ID_OUTPUT out number, name_OUTPUT out varchar2, balance_OUTPUT out binary_float, user_id_INPUT number) as
+begin
+    select max(balance) into balance_OUTPUT from accounts where user_id = user_ID_INPUT;
+    select account_id into account_ID_OUTPUT from accounts where user_id = user_ID_INPUT and balance = balance_OUTPUT;
+    select name into name_OUTPUT from accounts where user_id = user_ID_INPUT and balance = balance_OUTPUT;
+end getMaxAccount;
+/
+
 create or replace procedure getBalances(user_id_INPUT number, name_balance_out out SYS_REFCURSOR) as
 begin
     open name_balance_out for
@@ -282,13 +292,14 @@ begin
 end getTransactionsByAccount;
 /
 
-create or replace procedure getTransactionByID(transaction_ID_INPUT accounts.account_id%type, transactions_OUT out SYS_REFCURSOR) as
+create or replace procedure getTransactionByID(transaction_ID_INPUT transactions.transaction_id%type, transactions_OUT out SYS_REFCURSOR) as
 begin
     open transactions_OUT for
-    select amount, transaction_date, account_id from Transactions where transaction_id = transaction_ID_INPUT;
+    select transaction_id, amount, transaction_date, account_id from Transactions where transaction_id = transaction_ID_INPUT;
 end getTransactionByID;
 /
 commit;
+
 --if sql%rowcount > 0 then-- verify this works
 --    succeeded := true;
 --else

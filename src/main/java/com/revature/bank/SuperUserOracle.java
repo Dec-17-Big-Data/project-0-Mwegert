@@ -170,13 +170,13 @@ public class SuperUserOracle implements SuperUserDao{
 	}
 
 	@Override
-	public void deleteUser(String username) {
+	public boolean deleteUser(String username) {
 		log.traceEntry();
 		Connection con = ConnectionUtil.getConnection();
 		int succeeded = 0;
 		
 		if (con == null) {
-			return;
+			return false;
 		}
 		
 		try {
@@ -190,17 +190,18 @@ public class SuperUserOracle implements SuperUserDao{
 			if (succeeded == 1) {
 				System.out.println("Successfully deleted " + username + " from users");
 				log.traceExit("Successfully deleted " + username + " from users");
-				return;
+				return true;
 			}
 			System.out.println("That username was not found. Check your spelling and try again.");
 			log.traceExit("Successfully executed procedure. Nothing deleted.");
-			return;
+			
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
 			System.out.println("Action cannot be completed due to a database error. Please try again.");
 		}
 		
-		log.traceExit("SQL Exception when trying to delete a user.");
+		log.traceExit("Failed to delete user.");
+		return false;
 	}
 
 	@Override
@@ -212,18 +213,18 @@ public class SuperUserOracle implements SuperUserDao{
 			return Optional.empty();
 		}
 		try{
-			CallableStatement sb = con.prepareCall("call getUserInfo(?, ?, ?, ?, ?)");
-			sb.setString(1, username);
-			sb.registerOutParameter(2, java.sql.Types.VARCHAR); // password
-			sb.registerOutParameter(3, java.sql.Types.NUMERIC); // userid
-			sb.registerOutParameter(4, java.sql.Types.NUMERIC); // numaccounts
-			sb.registerOutParameter(5, java.sql.Types.NUMERIC); // totalbalance
-			sb.execute();
+			CallableStatement cb = con.prepareCall("call getUserInfo(?, ?, ?, ?, ?)");
+			cb.setString(1, username);
+			cb.registerOutParameter(2, java.sql.Types.VARCHAR); // password
+			cb.registerOutParameter(3, java.sql.Types.NUMERIC); // userid
+			cb.registerOutParameter(4, java.sql.Types.NUMERIC); // numaccounts
+			cb.registerOutParameter(5, java.sql.Types.NUMERIC); // totalbalance
+			cb.execute();
 			
-			if (sb.getInt(3) == 0) {
+			if (cb.getString(2) == null) {
 				throw new SQLException("Username does not exist in database.");
 			}
-			return Optional.of(new User(username, sb.getString(2), sb.getInt(3), sb.getInt(4), sb.getInt(5)));
+			return Optional.of(new User(username, cb.getString(2), cb.getInt(3), cb.getInt(4), cb.getInt(5)));
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
 			System.out.println("Action cannot be completed due to a database error. Please try again.");

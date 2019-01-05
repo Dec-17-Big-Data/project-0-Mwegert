@@ -20,19 +20,19 @@ public class TransactionService {
 		return transactionService;
 	}
 	
-	Optional<List<Transaction>> getTransactions(){
+	public Optional<List<Transaction>> getTransactions(){
 		return transactionDao.getTransactions();
 	}
 	
-	Optional<List<Transaction>> getTransactionsByUser(int userID){
+	public Optional<List<Transaction>> getTransactionsByUser(int userID){
 		return transactionDao.getTransactionsByUser(userID);
 	}
 	
-	Optional<List<Transaction>> getTransactionsByAccount(int accountID){
+	public Optional<List<Transaction>> getTransactionsByAccount(int accountID){
 		return transactionDao.getTransactionsByAccount(accountID);
 	}
 	
-	Optional<Transaction> getTransactionByID(int transactionID){
+	public Optional<Transaction> getTransactionByID(int transactionID){
 		return transactionDao.getTransactionByID(transactionID);
 	}
 }

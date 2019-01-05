@@ -52,6 +52,7 @@ public class UserOracle implements UserDao{
 			rs.close();
 			cb.close();
 			log.traceExit("Returned map of size: " + outputMap.size());
+			if (outputMap.size() == 0) return Optional.empty(); // safety measure
 			return Optional.of(outputMap);
 		} catch (SQLException e) {
 			System.out.println("Action cannot be completed due to a database error. Please try again.");

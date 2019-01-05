@@ -37,4 +37,9 @@ end;
 select count(account_id) as numaccounts, sum(balance) as totalbalance 
 from accounts group by user_id;
 
-
+DECLARE
+    s SYSREFCURSOR;
+begin
+    getTransactionByID(42, s);
+end;
+/

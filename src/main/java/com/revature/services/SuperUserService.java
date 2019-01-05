@@ -38,8 +38,8 @@ public class SuperUserService {
 		return superUserDao.changePassword(username, newPassword);
 	}
 	
-	public void deleteUser(String username) {
-		superUserDao.deleteUser(username);
+	public boolean deleteUser(String username) {
+		return superUserDao.deleteUser(username);
 	}
 	
 	public Optional<User> viewUser(String username){

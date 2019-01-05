@@ -20,15 +20,19 @@ public class BankAccountService {
 		return bankAccountService;
 	}
 	
-	Optional<BankAccount> getAccount(int userID, String name){
+	public Optional<BankAccount> getAccount(int userID, String name){
 		return bankAccountDao.getAccount(userID, name);
 	}
 	
-	void deposit(int accountID, double amount) {
+	public Optional<BankAccount> getAccount(int userID){
+		return bankAccountDao.getAccount(userID);
+	}
+	
+	public void deposit(int accountID, double amount) {
 		bankAccountDao.deposit(accountID, amount);
 	}
 	
-	boolean withdraw(int accountID, double amount) {
+	public boolean withdraw(int accountID, double amount) {
 		return bankAccountDao.withdraw(accountID, amount);
 	}
 }

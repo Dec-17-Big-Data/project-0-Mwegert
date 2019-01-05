@@ -2,6 +2,7 @@ package com.revature.bank;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Transaction implements Serializable{
 
@@ -16,7 +17,7 @@ public class Transaction implements Serializable{
 		super();
 		this.transactionID = transactionID;
 		this.amount = amount;
-		this.transactionDate = transactionDate;
+		this.transactionDate = transactionDate.minusHours(5); // EAST COAST TIME ZONE
 		this.accountID = accountID;
 	}
 	
@@ -83,8 +84,9 @@ public class Transaction implements Serializable{
 
 	@Override
 	public String toString() {
-		return "Transaction [transactionID=" + transactionID + ", amount=" + amount + ", transactionDate="
-				+ transactionDate + ", accountID=" + accountID + "]";
+		DateTimeFormatter dt = DateTimeFormatter.ofPattern("MM/dd/yy, HH:mm:ss");
+		return "\nTransaction [transactionID=" + transactionID + ", amount=" + amount + ", transactionDate="
+				+ transactionDate.format(dt) + ", accountID=" + accountID + "]";
 	}
 	
 	
