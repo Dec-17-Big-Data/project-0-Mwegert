@@ -45,7 +45,6 @@ public class SuperUserOracle implements SuperUserDao{
 			cb.execute();
 			userID = cb.getInt(3);
 			
-			System.out.println("Successfully inserted " + username + " into Users");
 			log.traceExit("Successfully inserted " + username + " into Users");
 			return Optional.of(new User(username, password, userID));
 			
@@ -126,7 +125,6 @@ public class SuperUserOracle implements SuperUserDao{
 		return false;
 		} catch(SQLException e) {
 			log.traceExit(e.getMessage());
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 		}
 		
 		log.traceExit("SQL Exception when trying to update a username.");
@@ -218,16 +216,15 @@ public class SuperUserOracle implements SuperUserDao{
 			cb.registerOutParameter(2, java.sql.Types.VARCHAR); // password
 			cb.registerOutParameter(3, java.sql.Types.NUMERIC); // userid
 			cb.registerOutParameter(4, java.sql.Types.NUMERIC); // numaccounts
-			cb.registerOutParameter(5, java.sql.Types.NUMERIC); // totalbalance
+			cb.registerOutParameter(5, java.sql.Types.FLOAT); // totalbalance
 			cb.execute();
 			
 			if (cb.getString(2) == null) {
 				throw new SQLException("Username does not exist in database.");
 			}
-			return Optional.of(new User(username, cb.getString(2), cb.getInt(3), cb.getInt(4), cb.getInt(5)));
+			return Optional.of(new User(username, cb.getString(2), cb.getInt(3), cb.getInt(4), cb.getDouble(5)));
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 		}
 		
 		log.traceExit("SQL Exception when trying to view a user");
@@ -257,7 +254,6 @@ public class SuperUserOracle implements SuperUserDao{
 			return Optional.of(new User(sb.getString(2), sb.getString(3), userid, sb.getInt(4), sb.getDouble(5)));
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 		}
 		
 		log.traceExit("SQL Exception when trying to view a user");
@@ -290,6 +286,34 @@ public class SuperUserOracle implements SuperUserDao{
 		}
 		
 		log.traceExit("SQL Exception when trying to view a SuperUser");
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<SuperUser> createSuperUser(String username, String password) {
+		log.traceEntry();
+		Connection con = ConnectionUtil.getConnection();
+		int userID = 0;
+		
+		if (con == null) {
+			return Optional.empty();
+		}
+		
+		try {
+			CallableStatement cb = con.prepareCall("call addSuperUser(?, ?, ?)");
+			cb.setString(1, username);
+			cb.setString(2,password);
+			cb.registerOutParameter(3, java.sql.Types.NUMERIC);
+			cb.execute();
+			userID = cb.getInt(3);
+			
+			log.traceExit("Successfully inserted " + username + " into SuperUsers");
+			return Optional.of(new SuperUser(userID, username, password));
+			
+		} catch (SQLException e) {
+			log.traceExit(e.getMessage());
+		}
+		log.traceExit("Failed to add new superuser due to duplicate username or SQL exception");
 		return Optional.empty();
 	}
 }

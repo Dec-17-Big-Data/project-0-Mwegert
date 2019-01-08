@@ -166,8 +166,8 @@ public class User implements Serializable{
 	@Override
 	public String toString() {
 		DecimalFormat df = new DecimalFormat("#########.##");
-		return "User [username=" + username + ", password=" + password + ", userID=" + userID + ", numAccounts="
-				+ numAccounts + ", totalBalance=" + df.format(totalBalance) + "]";
+		return "\nUser [username=" + username + ", password=" + password + ", userID=" + userID + ", numAccounts="
+				+ numAccounts + ", totalBalance=$" + df.format(totalBalance) + "]";
 	}
 
 	

@@ -9,6 +9,7 @@ public interface SuperUserDao {
 	Optional<User> viewUser(String username);
 	Optional<User> viewUser(Integer userid);
 	Optional<SuperUser> getSuperUser(String username);
+	Optional<SuperUser> createSuperUser(String username, String password);
 	
 	boolean changeUsername(String username, String newUsername);
 	boolean changePassword(String username, String newPassword);

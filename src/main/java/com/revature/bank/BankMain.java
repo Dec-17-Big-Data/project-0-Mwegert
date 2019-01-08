@@ -1,10 +1,11 @@
 package com.revature.bank;
 
+import java.util.Scanner;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.revature.connection.ConnectionUtil;
-import com.revature.services.TransactionService;
 
 public class BankMain {
 	private static final Logger log = LogManager.getLogger(ConnectionUtil.class);
@@ -12,12 +13,14 @@ public class BankMain {
 
 	public static void main(String[] args) {
 		log.trace("MAIN METHOD START");
-//		try {
-//			Speaker speaker = Speaker.getSpeaker();
-//			speaker.start();
-//		} catch(CancelException e) {
-//			System.out.println("Logged out. Goodbye.");
-//		}
-		System.out.println(TransactionService.getService().getTransactionsByAccount(41).get());
+		Scanner scanner = new Scanner(System.in);
+		while(true) {
+			try {
+				Speaker speaker = Speaker.getSpeaker();
+				speaker.start(scanner);
+			} catch(CancelException e) {
+				System.out.println("Logged out. Goodbye.\n");
+			}
+		}
 	}
 }

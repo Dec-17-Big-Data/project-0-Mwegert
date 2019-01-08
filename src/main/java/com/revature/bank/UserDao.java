@@ -8,7 +8,6 @@ public interface UserDao {
 	Optional<Double> getBalance(int userID);
 	Optional<Double> getBalance(int userID, String accountName);
 	Optional<User> getUser(String username);
-	Optional<User> getUser(int userID);
 	
 	boolean createAccount(int userID, double initialDeposit, String accountName);
 	boolean createAccount(String username, double initialDeposit, String accountName);

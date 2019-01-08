@@ -43,3 +43,15 @@ begin
     getTransactionByID(42, s);
 end;
 /
+
+DECLARE
+    a number(10);
+    b varchar(255);
+    c binary_float;
+begin
+    getMaxAccount(a, b, c, 1);
+    dbms_output.put_line(a);
+    dbms_output.put_line(b);
+    dbms_output.put_line(c);
+end;
+/

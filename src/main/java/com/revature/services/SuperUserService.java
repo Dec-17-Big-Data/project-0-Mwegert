@@ -53,4 +53,8 @@ public class SuperUserService {
 	public Optional<SuperUser> getSuperUser(String username){
 		return superUserDao.getSuperUser(username);
 	}
+	
+	public Optional<SuperUser> createSuperUser(String username, String password){
+		return superUserDao.createSuperUser(username, password);
+	}
 }

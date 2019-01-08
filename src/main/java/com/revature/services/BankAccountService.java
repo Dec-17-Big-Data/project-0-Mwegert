@@ -35,4 +35,8 @@ public class BankAccountService {
 	public boolean withdraw(int accountID, double amount) {
 		return bankAccountDao.withdraw(accountID, amount);
 	}
+	
+	public boolean sendMoney(int accountOneID, int accountTwoID, double amount) {
+		return bankAccountDao.sendMoney(accountOneID, accountTwoID, amount);
+	}
 }

@@ -37,9 +37,7 @@ public class UserService {
 	public Optional<User> getUser(String username){
 		return userDao.getUser(username);
 	}
-	public Optional<User> getUser(int userID){
-		return userDao.getUser(userID);
-	}
+
 	public boolean createAccount(int userID, double initialDeposit, String accountName) {
 		return userDao.createAccount(userID, initialDeposit, accountName);
 	}
@@ -55,6 +53,5 @@ public class UserService {
 	public boolean transfer(int userID, String account1, String account2, double amount) {
 		return userDao.transfer(userID, account1, account2, amount);
 	}
-	
-	//public boolean sendMoney : to another user
+
 }

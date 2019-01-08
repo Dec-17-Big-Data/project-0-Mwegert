@@ -82,7 +82,6 @@ public class UserOracle implements UserDao{
 			DecimalFormat df = new DecimalFormat("#########.##");
 			return Optional.of(Double.parseDouble(df.format(cb.getDouble(3))));
 		} catch (SQLException e) {
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 			log.traceExit(e);
 		}
 		return Optional.empty();
@@ -128,6 +127,7 @@ public class UserOracle implements UserDao{
 			cb.setInt(1, userID);
 			cb.setDouble(2, initialDeposit);
 			cb.setString(3, accountName);
+			
 			cb.execute();
 			
 			log.traceExit();
@@ -151,9 +151,9 @@ public class UserOracle implements UserDao{
 
 		try {
 			CallableStatement cb = con.prepareCall("call addAccountByUsername(?,?,?)");
-			cb.setString(1, username);
+			cb.setString(1, accountName);
 			cb.setDouble(2, initialDeposit);
-			cb.setString(3, accountName);
+			cb.setString(3, username);
 			cb.execute();
 			
 			log.traceExit();
@@ -177,10 +177,13 @@ public class UserOracle implements UserDao{
 		}
 
 		try {
-			CallableStatement cb = con.prepareCall("call deleteAccountbyUserID(?,?)");
+			CallableStatement cb = con.prepareCall("call deleteAccountbyUserID(?,?,?)");
 			cb.setInt(1, userID);
 			cb.setString(2, accountName);
+			cb.registerOutParameter(3, java.sql.Types.INTEGER);
 			cb.execute();
+			
+			if (cb.getInt(3) == 0) throw new SQLException();
 			
 			log.traceExit();
 			return true;
@@ -212,8 +215,8 @@ public class UserOracle implements UserDao{
 			cb.execute();
 			
 			if (cb.getInt(5) == 1) { // transfer successful
-				System.out.println("Transfer of " + amount + " from " + account1 + " to " + account2 + " successful.");
-				log.traceExit("Transfer of " + amount + " from " + account1 + " to " + account2 + " successful.");
+				System.out.println("Transfer of " + amount + " from '" + account1 + "' to '" + account2 + "' was successful.");
+				log.traceExit("Transfer of " + amount + " from '" + account1 + "' to '" + account2 + "' was successful.");
 				return true;
 			}
 			System.out.println("Transfer aborted due to insufficient funds.");
@@ -253,16 +256,9 @@ public class UserOracle implements UserDao{
 			log.traceExit("Successfully returned user info.");
 			return Optional.of(new User(username, cb.getString(2), cb.getInt(3), cb.getInt(4), cb.getDouble(5)));
 		} catch (SQLException e) {
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 			log.traceExit(e);
 		}
 		return Optional.empty();
-	}
-
-	@Override
-	public Optional<User> getUser(int userID) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }
