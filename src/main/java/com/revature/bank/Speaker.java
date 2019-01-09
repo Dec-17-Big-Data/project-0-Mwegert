@@ -19,9 +19,7 @@ import com.revature.services.TransactionService;
 import com.revature.services.UserService;
 
 // Mason Wegert
-// 12/31/18
-// This class is used to decipher user input
-// based on a set of booleans that determine state.
+// 1/9/19
 
 public class Speaker { // change to singleton
 	private static Speaker speaker = null;
@@ -315,8 +313,8 @@ public class Speaker { // change to singleton
 				try {
 					System.out.println("How much would you like to withdraw from " + userAccount.getAccountName() + "?");
 					input = scanner.nextLine();
-					log.trace("What you seek you shall find on line 319.");
-					//if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
+					
+					if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
 					if (input.charAt(0) == '$') input = input.substring(1);
 					
 					withdrawlAmount = Double.parseDouble(input);
