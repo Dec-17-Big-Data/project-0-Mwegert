@@ -187,6 +187,7 @@ public class Speaker { // change to singleton
 				try {
 					System.out.println("How much would you like to send from " + account1.getAccountName() + "?");
 					input = scanner.nextLine();
+					if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
 					if (input.charAt(0) == '$') input = input.substring(1);
 					transferAmount = Double.parseDouble(input);
 					if (transferAmount > account1.getBalance()) {
@@ -314,8 +315,12 @@ public class Speaker { // change to singleton
 				try {
 					System.out.println("How much would you like to withdraw from " + userAccount.getAccountName() + "?");
 					input = scanner.nextLine();
+					log.trace("What you seek you shall find on line 319.");
+					//if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
 					if (input.charAt(0) == '$') input = input.substring(1);
+					
 					withdrawlAmount = Double.parseDouble(input);
+					
 					if (withdrawlAmount > userAccount.getBalance()) {
 						System.out.println("You don't have sufficient funds.");
 						continue;
@@ -370,6 +375,7 @@ public class Speaker { // change to singleton
 
 			System.out.println("How much would you like to deposit into " + userAccount.getAccountName() + "?");
 			input = scanner.nextLine();
+			if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
 			if (input.charAt(0) == '$') input = input.substring(1);
 			try {
 				depositAmount = Double.parseDouble(input);
@@ -423,6 +429,7 @@ public class Speaker { // change to singleton
 				try {
 					System.out.println("How much would you like to withdraw from " + firstAccount.getAccountName() + "?");
 					input = scanner.nextLine();
+					if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
 					if (input.charAt(0) == '$') input = input.substring(1);
 					transferAmount = Double.parseDouble(input);
 					if (transferAmount > firstAccount.getBalance()) {
@@ -545,6 +552,7 @@ public class Speaker { // change to singleton
 			try {
 				String temp = scanner.nextLine();
 				if (temp.charAt(0) == '$') {
+					if (temp == null || "".equals(temp) || "\n".equals(temp)) temp = " ";
 					temp = temp.substring(1);
 				}
 				initialDeposit = Double.parseDouble(temp);
