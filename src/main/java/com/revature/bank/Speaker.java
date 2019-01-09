@@ -313,8 +313,8 @@ public class Speaker { // change to singleton
 				try {
 					System.out.println("How much would you like to withdraw from " + userAccount.getAccountName() + "?");
 					input = scanner.nextLine();
-					log.trace("What you seek you shall find on line 319.");
-					//if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
+					
+					if (input == null || "".equals(input) || "\n".equals(input)) input = " ";
 					if (input.charAt(0) == '$') input = input.substring(1);
 					
 					withdrawlAmount = Double.parseDouble(input);
