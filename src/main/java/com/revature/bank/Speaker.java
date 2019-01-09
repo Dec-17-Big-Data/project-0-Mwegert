@@ -19,9 +19,7 @@ import com.revature.services.TransactionService;
 import com.revature.services.UserService;
 
 // Mason Wegert
-// 12/31/18
-// This class is used to decipher user input
-// based on a set of booleans that determine state.
+// 1/9/19
 
 public class Speaker { // change to singleton
 	private static Speaker speaker = null;
