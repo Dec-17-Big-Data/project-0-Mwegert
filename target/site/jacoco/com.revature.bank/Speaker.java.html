@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Speaker.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JBDCBank</a> &gt; <a href="index.source.html" class="el_package">com.revature.bank</a> &gt; <span class="el_source">Speaker.java</span></div><h1>Speaker.java</h1><pre class="source lang-java linenums">package com.revature.bank;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Scanner;
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.revature.connection.ConnectionUtil;
+import com.revature.services.BankAccountService;
+import com.revature.services.SuperUserService;
+import com.revature.services.TransactionService;
+import com.revature.services.UserService;
+
+// Mason Wegert
+// 12/31/18
+// This abstract class is used to decipher user input
+// based on a set of booleans that determine state.
+
+public class Speaker { // change to singleton
+<span class="fc" id="L27">	private static Speaker speaker = null;</span>
+<span class="fc" id="L28">	public CurrentUser currentUser = null;</span>
+<span class="fc" id="L29">	private static final Logger log = LogManager.getLogger(ConnectionUtil.class);</span>
+
+
+<span class="fc" id="L32">	private UserService userService = null;</span>
+<span class="fc" id="L33">	private SuperUserService superUserService = null;</span>
+<span class="fc" id="L34">	private BankAccountService bankAccountService = null;</span>
+<span class="fc" id="L35">	private TransactionService transactionService = null;</span>
+
+<span class="fc" id="L37">	private Speaker() {</span>
+<span class="fc" id="L38">		this.currentUser = new CurrentUser();</span>
+<span class="fc" id="L39">		this.userService = UserService.getService();</span>
+<span class="fc" id="L40">		this.superUserService = SuperUserService.getService();</span>
+<span class="fc" id="L41">		this.bankAccountService = BankAccountService.getService();</span>
+<span class="fc" id="L42">		this.transactionService = TransactionService.getService();</span>
+<span class="fc" id="L43">	}</span>
+
+	public static Speaker getSpeaker() {
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">		if (speaker == null) {</span>
+<span class="fc" id="L47">			speaker = new Speaker();</span>
+		}
+<span class="fc" id="L49">		return speaker;</span>
+	}
+
+	public void start(Scanner scanner) throws CancelException{
+
+		try {
+<span class="fc" id="L55">			Properties props = new Properties();</span>
+<span class="fc" id="L56">			InputStream in = new FileInputStream(&quot;C:\\Users\\mason\\OneDrive\\Documents\\Revature-Code\\JBDCBank\\resources\\connection.properties&quot;);</span>
+<span class="fc" id="L57">			props.load(in);</span>
+<span class="fc" id="L58">			String fileUsername = props.getProperty(&quot;superuser.username&quot;);</span>
+<span class="fc" id="L59">			String filePassword = props.getProperty(&quot;superuser.password&quot;);</span>
+<span class="fc" id="L60">			superUserService.createSuperUser(fileUsername, filePassword);</span>
+<span class="pc" id="L61">		} catch (Exception e) {</span>
+<span class="nc" id="L62">			System.out.println(&quot;Unable to create new SuperUser - file not found.&quot;);</span>
+<span class="nc" id="L63">			log.trace(&quot;SuperUser creation file not found.&quot;);</span>
+		}
+<span class="nc" id="L65">		while(true) {</span>
+			// log in or register:
+<span class="fc" id="L67">			entry(scanner);</span>
+<span class="fc" id="L68">			System.out.println(&quot;\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n&quot;);</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">			if(currentUser.isSuperUser()) System.out.println(&quot;Successfully logged in as superuser &quot; + currentUser.getUsername() + &quot;.&quot;);</span>
+<span class="fc" id="L70">			else System.out.println(&quot;Successfully logged in as &quot; + currentUser.getUsername() + &quot;.&quot;);</span>
+
+			// user should be logged in now
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">			while(currentUser.isLoggedIn()) {</span>
+				try {
+<span class="fc" id="L75">					performAction(scanner);</span>
+<span class="fc" id="L76">				} catch (CancelException e) {</span>
+<span class="fc" id="L77">					log.traceExit(e.getMessage());</span>
+<span class="fc" id="L78">					reset();</span>
+<span class="fc" id="L79">					break;</span>
+				}
+			}
+		}
+	}
+
+	private void performAction(Scanner scanner) throws CancelException{
+
+<span class="fc" id="L87">		System.out.println(&quot;\n&gt; Enter a command or type 'help' for more info.\n&quot;);</span>
+<span class="fc" id="L88">		String input = scanner.nextLine().trim();</span>
+		try {
+<span class="fc" id="L90">			System.out.println(&quot;\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n&quot;);</span>
+<span class="fc" id="L91">			input = decipher(input);</span>
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">			if(currentUser.isSuperUser()) { // superuser commands</span>
+<span class="pc bpc" id="L94" title="12 of 22 branches missed.">				switch(input) {</span>
+<span class="nc" id="L95">				case &quot;createuser&quot;: createUser(scanner);</span>
+<span class="nc" id="L96">				break;</span>
+<span class="fc" id="L97">				case &quot;viewusers&quot;: viewUsers(scanner);</span>
+<span class="fc" id="L98">				break;</span>
+<span class="nc" id="L99">				case &quot;viewuser&quot;: viewUser(scanner);</span>
+<span class="nc" id="L100">				break;</span>
+<span class="fc" id="L101">				case &quot;edituser&quot;: editUser(scanner);</span>
+<span class="fc" id="L102">				break;</span>
+<span class="fc" id="L103">				case &quot;deleteuser&quot;: deleteUser(scanner);</span>
+<span class="fc" id="L104">				break;</span>
+				case &quot;help&quot;:
+<span class="fc" id="L106">					System.out.println(&quot;The following are valid commands:&quot;</span>
+							+ &quot;'create user', 'view users'/'view all', &quot;
+							+ &quot;'view user'/'view one', 'edit user', 'delete user'\n&quot;);
+<span class="fc" id="L109">					break;</span>
+				case &quot;logout&quot;: 
+<span class="fc" id="L111">					log.traceExit(&quot;Superuser logged out&quot;);</span>
+<span class="fc" id="L112">					throw new CancelException(&quot;Superuser logged out.&quot;);</span>
+<span class="nc" id="L113">				default: log.traceExit(&quot;Should never reach this point.&quot;);</span>
+				break;
+				}
+<span class="nc" id="L116">			}</span>
+
+			else { // normal user commands
+<span class="pc bpc" id="L119" title="16 of 34 branches missed.">				switch(input) {</span>
+<span class="fc" id="L120">				case &quot;getbalances&quot;: getBalances(scanner);</span>
+<span class="fc" id="L121">				break;</span>
+<span class="fc" id="L122">				case &quot;getbalance&quot;: getBalance(scanner);</span>
+<span class="fc" id="L123">				break;</span>
+<span class="fc" id="L124">				case &quot;createaccount&quot;: createAccount(scanner);</span>
+<span class="fc" id="L125">				break;</span>
+<span class="fc" id="L126">				case &quot;deleteaccount&quot;: deleteAccount(scanner);</span>
+<span class="fc" id="L127">				break;</span>
+<span class="fc" id="L128">				case &quot;transfer&quot;: transferMoney(scanner);</span>
+<span class="fc" id="L129">				break;</span>
+<span class="nc" id="L130">				case &quot;deposit&quot;: deposit(scanner);</span>
+<span class="nc" id="L131">				break;</span>
+<span class="fc" id="L132">				case &quot;withdraw&quot;: withdraw(scanner);</span>
+<span class="fc" id="L133">				break;</span>
+<span class="nc" id="L134">				case &quot;viewhistory&quot;: viewHistory(scanner);</span>
+<span class="nc" id="L135">				break;</span>
+<span class="fc" id="L136">				case &quot;sendmoney&quot;: sendMoney(scanner);</span>
+<span class="fc" id="L137">				break;</span>
+				case &quot;help&quot;:
+<span class="fc" id="L139">					System.out.println(&quot;The following are valid commands: &quot;</span>
+							+ &quot;'view all balances'/'view all', 'view one balance'/'view one',&quot;
+							+ &quot; 'create account', 'delete account', 'transfer', 'deposit',&quot;
+							+ &quot; 'withdraw', 'view history', 'send money'\n&quot;);
+<span class="fc" id="L143">					break;</span>
+				case &quot;logout&quot;: 
+<span class="fc" id="L145">					log.traceExit(&quot;user logged out&quot;);</span>
+<span class="fc" id="L146">					throw new CancelException(&quot;User logged out.&quot;);</span>
+<span class="nc" id="L147">				default: log.traceExit(&quot;Should never reach this point.&quot;);</span>
+				break;
+				}
+			}
+<span class="pc" id="L151">		} catch (InvalidInputException e) {</span>
+<span class="fc" id="L152">			System.out.println(&quot;Invalid input. Please try again.&quot;);</span>
+		}
+
+<span class="fc" id="L155">	}</span>
+
+	private void sendMoney(Scanner scanner) {
+<span class="fc" id="L158">		log.traceEntry();</span>
+<span class="fc" id="L159">		String input = &quot;&quot;;</span>
+<span class="fc" id="L160">		BankAccount account1 = null;</span>
+<span class="fc" id="L161">		BankAccount account2 = null;</span>
+		double transferAmount;
+<span class="fc" id="L163">		Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="fc" id="L164">		Set&lt;String&gt; accountNames = null; </span>
+		int user2ID;
+
+		try {
+<span class="fc" id="L168">			System.out.println(&quot;Your accounts are displayed below. Enter the name of the account &quot;</span>
+					+ &quot;from which you would like to send.\nOtherwise, type anything and your &quot;
+					+ &quot;primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)&quot;);
+<span class="fc" id="L171">			userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="fc" id="L172">			accountNames = userBalances.keySet();</span>
+<span class="fc" id="L173">			System.out.println(accountNames);</span>
+
+<span class="fc" id="L175">			input = scanner.nextLine();</span>
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">			if (!accountNames.contains(input)) {</span>
+				// set account name to default.
+<span class="fc" id="L180">				account1 = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="fc" id="L182">			} else {</span>
+<span class="nc" id="L183">				account1 = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+			}
+
+			while(true) {
+				try {
+<span class="fc" id="L188">					System.out.println(&quot;How much would you like to send from &quot; + account1.getAccountName() + &quot;?&quot;);</span>
+<span class="fc" id="L189">					input = scanner.nextLine();</span>
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">					if (input.charAt(0) == '$') input = input.substring(1);</span>
+<span class="fc" id="L191">					transferAmount = Double.parseDouble(input);</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">					if (transferAmount &gt; account1.getBalance()) {</span>
+<span class="nc" id="L193">						System.out.println(&quot;You don't have sufficient funds.&quot;);</span>
+<span class="nc" id="L194">						continue;</span>
+					}
+					break;
+<span class="nc" id="L197">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L198">					log.traceExit(e);</span>
+<span class="nc" id="L199">					throw new CancelException(&quot;Number format&quot;);</span>
+				}
+			} //transfer amount is set and good to go. Figure out account 2.
+
+<span class="nc" id="L203">			while(true) {</span>
+				try {
+<span class="fc" id="L205">					System.out.println(&quot;Enter the name of the user to whom you would like to send this money.\n&quot;</span>
+							+ &quot;Note that this is case sensitive.&quot;);
+<span class="fc" id="L207">					input = scanner.nextLine();</span>
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">					if(&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+<span class="fc" id="L209">					user2ID = userService.getUser(input).get().getUserID();</span>
+<span class="fc" id="L210">					account2 = bankAccountService.getAccount(user2ID).get();</span>
+<span class="fc" id="L211">					break;</span>
+<span class="nc" id="L212">				} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L213">					System.out.println(&quot;That user was not found in our system.\n&quot;);</span>
+				}
+			} //ID's and transfer amount set for both
+
+<span class="pc bpc" id="L217" title="1 of 2 branches missed.">			if (!(bankAccountService.sendMoney(account1.getAccountID(), account2.getAccountID(), transferAmount))) {</span>
+<span class="nc" id="L218">				System.out.println(&quot;An unknown error occurred. Please find a software engineer.&quot;);</span>
+<span class="nc" id="L219">				throw new CancelException(&quot;Unknown error.&quot;);// shouldnt happen, failsafe</span>
+			}
+
+<span class="fc" id="L222">			log.traceExit(&quot;Successfully transferred $&quot; + transferAmount + &quot; to &quot; + input);</span>
+<span class="fc" id="L223">			System.out.println(&quot;Successfully transferred $&quot; + transferAmount + &quot; to &quot; + input);</span>
+<span class="pc" id="L224">		} catch (CancelException e) {</span>
+<span class="nc" id="L225">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L226">			log.traceExit(e);</span>
+		}
+
+<span class="fc" id="L229">	}</span>
+
+	private void viewHistory(Scanner scanner) {
+<span class="nc" id="L232">		log.traceEntry();</span>
+<span class="nc" id="L233">		String input = &quot;&quot;;</span>
+		try {
+<span class="nc" id="L235">			System.out.println(&quot;Would you like to view 'all' transaction history, or just &quot;</span>
+					+ &quot;a 'single' account?&quot;);
+<span class="nc" id="L237">			input = normalize(scanner.nextLine());</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">			if (&quot;cancel&quot;.equals(input)) throw new CancelException();</span>
+
+<span class="nc bnc" id="L240" title="All 28 branches missed.">			switch(input) {</span>
+			case &quot;all&quot;:
+			case &quot;al&quot;:
+			case &quot;a&quot;:
+			case &quot;'all'&quot;:
+<span class="nc" id="L245">				System.out.println(transactionService.getTransactionsByUser(currentUser.getUserID()).get());</span>
+<span class="nc" id="L246">				break;</span>
+			case &quot;'single'&quot;:
+			case &quot;s&quot;:
+			case &quot;single&quot;:
+			case &quot;one&quot;:
+			case &quot;account&quot;:
+<span class="nc" id="L252">				Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="nc" id="L253">				Set&lt;String&gt; accountNames = null; </span>
+<span class="nc" id="L254">				BankAccount userAccount = null;</span>
+<span class="nc" id="L255">				System.out.println(&quot;Your accounts are displayed below. Enter the name of the account&quot;</span>
+						+ &quot;you would like to view.\nOtherwise, type anything and your &quot;
+						+ &quot;primary account will be chosen by default. These are CASE SENSITIVE. (Type 'cancel' to exit.)&quot;);
+<span class="nc" id="L258">				userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="nc" id="L259">				accountNames = userBalances.keySet();</span>
+<span class="nc" id="L260">				System.out.println(accountNames);</span>
+
+<span class="nc" id="L262">				input = scanner.nextLine();</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">				if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="nc bnc" id="L265" title="All 2 branches missed.">				if (!accountNames.contains(input)) {</span>
+					// set account name to default.
+<span class="nc" id="L267">					userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="nc" id="L269">				} else {</span>
+<span class="nc" id="L270">					userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+				}
+<span class="nc" id="L272">				System.out.println(&quot;Your transaction history for &quot; + userAccount.getAccountName() +</span>
+<span class="nc" id="L273">						&quot; is displayed below: &quot;);</span>
+<span class="nc" id="L274">				System.out.println(transactionService.getTransactionsByAccount(userAccount.getAccountID()).get());</span>
+<span class="nc" id="L275">				log.traceExit(&quot;Successfully returned transaction history of a single account.&quot;);</span>
+			}
+<span class="nc" id="L277">		} catch(CancelException e) {</span>
+<span class="nc" id="L278">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L279">			log.traceExit(e);</span>
+<span class="nc" id="L280">		} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L281">			System.out.println(&quot;No transaction history available.&quot;);</span>
+<span class="nc" id="L282">			log.traceExit(e);</span>
+		}
+<span class="nc" id="L284">	}</span>
+
+	private void withdraw(Scanner scanner) {
+<span class="fc" id="L287">		log.traceEntry();</span>
+<span class="fc" id="L288">		Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="fc" id="L289">		Set&lt;String&gt; accountNames = null; </span>
+<span class="fc" id="L290">		String input = &quot;&quot;;</span>
+		Double withdrawlAmount;
+<span class="fc" id="L292">		BankAccount userAccount = null;</span>
+
+		try {
+<span class="fc" id="L295">			System.out.println(&quot;Your accounts are displayed below. Enter the name of the account &quot;</span>
+					+ &quot;from which you would like to withdraw.\nOtherwise, type anything and your &quot;
+					+ &quot;primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)&quot;);
+<span class="fc" id="L298">			userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="fc" id="L299">			accountNames = userBalances.keySet();</span>
+<span class="fc" id="L300">			System.out.println(accountNames);</span>
+
+<span class="fc" id="L302">			input = scanner.nextLine();</span>
+<span class="pc bpc" id="L303" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="fc bfc" id="L305" title="All 2 branches covered.">			if (!accountNames.contains(input)) {</span>
+				// set account name to default.
+<span class="fc" id="L307">				userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="fc" id="L309">			} else {</span>
+<span class="fc" id="L310">				userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+			}
+
+			while(true) {
+				try {
+<span class="fc" id="L315">					System.out.println(&quot;How much would you like to withdraw from &quot; + userAccount.getAccountName() + &quot;?&quot;);</span>
+<span class="fc" id="L316">					input = scanner.nextLine();</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">					if (input.charAt(0) == '$') input = input.substring(1);</span>
+<span class="fc" id="L318">					withdrawlAmount = Double.parseDouble(input);</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">					if (withdrawlAmount &gt; userAccount.getBalance()) {</span>
+<span class="fc" id="L320">						System.out.println(&quot;You don't have sufficient funds.&quot;);</span>
+<span class="fc" id="L321">						continue;</span>
+					}
+<span class="fc" id="L323">					bankAccountService.withdraw(userAccount.getAccountID(), withdrawlAmount);</span>
+<span class="fc" id="L324">					log.traceExit(&quot;User withdrew &quot; + -withdrawlAmount + &quot; from &quot; + userAccount.getAccountName());</span>
+<span class="fc" id="L325">					System.out.println(&quot;$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$&quot;);</span>
+<span class="fc" id="L326">					System.out.println(&quot;Here is your money. Your remaining balance is $&quot; + </span>
+<span class="fc" id="L327">							(userAccount.getBalance() - withdrawlAmount));</span>
+<span class="fc" id="L328">					System.out.println(&quot;$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n&quot;);</span>
+<span class="fc" id="L329">					break;</span>
+<span class="fc" id="L330">				} catch (NumberFormatException e) {</span>
+<span class="fc" id="L331">					log.traceExit(e);</span>
+<span class="fc" id="L332">					throw new CancelException(&quot;Number format&quot;);</span>
+				}
+			}
+<span class="fc" id="L335">		} catch(CancelException e) {</span>
+<span class="fc" id="L336">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="fc" id="L337">			log.traceExit(e);</span>
+<span class="nc" id="L338">		} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L339">			System.out.println(&quot;You don't have any balances! You must create an account first!&quot;);</span>
+<span class="nc" id="L340">			log.traceExit(&quot;User tried to withdraw despite having no account.&quot;);</span>
+		}
+<span class="fc" id="L342">	}</span>
+
+	private void deposit(Scanner scanner) {
+<span class="nc" id="L345">		log.traceEntry();</span>
+<span class="nc" id="L346">		Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="nc" id="L347">		Set&lt;String&gt; accountNames = null; </span>
+<span class="nc" id="L348">		String input = &quot;&quot;;</span>
+<span class="nc" id="L349">		BankAccount userAccount = null;</span>
+		Double depositAmount;
+
+		try {
+<span class="nc" id="L353">			System.out.println(&quot;Your accounts are displayed below. Enter the name of the account &quot;</span>
+					+ &quot;into which you would like to deposit.\nOtherwise, type anything and your &quot;
+					+ &quot;primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)&quot;);
+<span class="nc" id="L356">			userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="nc" id="L357">			accountNames = userBalances.keySet();</span>
+<span class="nc" id="L358">			System.out.println(accountNames);</span>
+
+<span class="nc" id="L360">			input = scanner.nextLine();</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="nc bnc" id="L363" title="All 2 branches missed.">			if (!accountNames.contains(input)) {</span>
+				// set account name to default.
+<span class="nc" id="L365">				userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="nc" id="L367">			} else {</span>
+<span class="nc" id="L368">				userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+			}
+
+<span class="nc" id="L371">			System.out.println(&quot;How much would you like to deposit into &quot; + userAccount.getAccountName() + &quot;?&quot;);</span>
+<span class="nc" id="L372">			input = scanner.nextLine();</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">			if (input.charAt(0) == '$') input = input.substring(1);</span>
+			try {
+<span class="nc" id="L375">				depositAmount = Double.parseDouble(input);</span>
+<span class="nc" id="L376">				bankAccountService.deposit(userAccount.getAccountID(), depositAmount);</span>
+<span class="nc" id="L377">				System.out.println(&quot;Successfully deposited $&quot; + depositAmount + &quot; into &quot; + userAccount.getAccountName());</span>
+<span class="nc" id="L378">				log.traceExit(&quot;Successfully deposited $&quot; + depositAmount + &quot; into &quot; + userAccount.getAccountName());</span>
+<span class="nc" id="L379">			} catch(NumberFormatException e) {</span>
+<span class="nc" id="L380">				log.traceExit(e);</span>
+<span class="nc" id="L381">				throw new CancelException(&quot;User has no money to deposit.&quot;);</span>
+			}
+
+<span class="nc" id="L384">		} catch(CancelException e) {</span>
+<span class="nc" id="L385">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L386">			log.traceExit(e);</span>
+<span class="nc" id="L387">		} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L388">			System.out.println(&quot;You must first create an account before making a deposit.&quot;);</span>
+<span class="nc" id="L389">			log.traceExit(&quot;User tried to make a deposit without an account&quot;);</span>
+		}
+<span class="nc" id="L391">	}</span>
+
+	private void transferMoney(Scanner scanner) {
+<span class="fc" id="L394">		log.traceEntry();</span>
+<span class="fc" id="L395">		Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="fc" id="L396">		Set&lt;String&gt; accountNames = null; </span>
+<span class="fc" id="L397">		String input = &quot;&quot;;</span>
+<span class="fc" id="L398">		BankAccount firstAccount = null;</span>
+<span class="fc" id="L399">		BankAccount secondAccount = null;</span>
+		Double transferAmount;
+		try {
+<span class="fc" id="L402">			System.out.println(&quot;Your accounts are displayed below. Enter the name of the account &quot;</span>
+					+ &quot;FROM which you would like to withdraw.\nOtherwise, type anything and your &quot;
+					+ &quot;primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)&quot;);
+<span class="fc" id="L405">			userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">			if (userBalances.size() &lt; 2) throw new NoSuchElementException(&quot;Only 1 account.&quot;);</span>
+
+<span class="fc" id="L408">			accountNames = userBalances.keySet();</span>
+<span class="fc" id="L409">			System.out.println(accountNames);</span>
+
+<span class="fc" id="L411">			input = scanner.nextLine();</span>
+<span class="pc bpc" id="L412" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="pc bpc" id="L414" title="1 of 2 branches missed.">			if (!accountNames.contains(input)) {</span>
+				// set account name to default.
+<span class="nc" id="L416">				firstAccount = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="nc" id="L418">			} else {</span>
+<span class="fc" id="L419">				firstAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+			}
+
+			while(true) {
+				try {
+<span class="fc" id="L424">					System.out.println(&quot;How much would you like to withdraw from &quot; + firstAccount.getAccountName() + &quot;?&quot;);</span>
+<span class="fc" id="L425">					input = scanner.nextLine();</span>
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">					if (input.charAt(0) == '$') input = input.substring(1);</span>
+<span class="fc" id="L427">					transferAmount = Double.parseDouble(input);</span>
+<span class="pc bpc" id="L428" title="1 of 2 branches missed.">					if (transferAmount &gt; firstAccount.getBalance()) {</span>
+<span class="nc" id="L429">						System.out.println(&quot;You don't have sufficient funds.&quot;);</span>
+<span class="nc" id="L430">						continue;</span>
+					}
+<span class="fc" id="L432">					log.trace(&quot;User has sufficient funds to make a transfer.&quot;);</span>
+<span class="fc" id="L433">					break;</span>
+<span class="nc" id="L434">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L435">					log.traceExit(e);</span>
+<span class="nc" id="L436">					throw new CancelException(&quot;Number format&quot;);</span>
+				}
+			}
+
+<span class="fc" id="L440">			System.out.println(&quot;Enter the name of the account &quot;</span>
+					+ &quot;into which you would like to deposit.\nOtherwise, type anything and your &quot;
+					+ &quot;primary account will be chosen by default.(Type 'cancel' to exit.)&quot;);
+<span class="fc" id="L443">			System.out.println(&quot;Account names (case sensitive): \n&quot; + accountNames);</span>
+
+<span class="fc" id="L445">			input = scanner.nextLine();</span>
+<span class="pc bpc" id="L446" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="pc bpc" id="L448" title="1 of 2 branches missed.">			if (!accountNames.contains(input)) {</span>
+				// set account name to default.
+<span class="nc" id="L450">				secondAccount = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="nc" id="L452">			} else {</span>
+<span class="fc" id="L453">				secondAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+			}
+
+<span class="pc bpc" id="L456" title="1 of 2 branches missed.">			if (firstAccount.equals(secondAccount)) {</span>
+<span class="nc" id="L457">				System.out.println(&quot;You can't transfer from an account to the same account.&quot;);</span>
+<span class="nc" id="L458">				log.traceExit(&quot;User tried to transfer from an account to the same account&quot;);</span>
+<span class="nc" id="L459">				throw new CancelException(&quot;Same account.&quot;);</span>
+			}
+
+			// good to go on the transfer:
+<span class="fc" id="L463">			userService.transfer(currentUser.getUserID(), firstAccount.getAccountName(),</span>
+<span class="fc" id="L464">					secondAccount.getAccountName(), transferAmount);</span>
+<span class="fc" id="L465">			log.traceExit(&quot;Transfer of &quot; + transferAmount + &quot; was successful!&quot;);</span>
+
+<span class="pc" id="L467">		} catch(CancelException e) {</span>
+<span class="nc" id="L468">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L469">			log.traceExit(e);</span>
+<span class="nc" id="L470">		} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L471">			System.out.println(&quot;You need at least 2 accounts to transfer between them&quot;);</span>
+<span class="nc" id="L472">			log.traceExit(&quot;User doesnt have 2+ accounts.&quot;);</span>
+		}
+<span class="fc" id="L474">	}</span>
+
+	private void deleteAccount(Scanner scanner) {
+<span class="fc" id="L477">		log.traceEntry();</span>
+<span class="fc" id="L478">		Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="fc" id="L479">		Set&lt;String&gt; accountNames = null; </span>
+<span class="fc" id="L480">		String input = &quot;&quot;;</span>
+<span class="fc" id="L481">		BankAccount userAccount = null;</span>
+		try {
+<span class="fc" id="L483">			System.out.println(&quot;Your accounts are displayed below. Enter the name of the account &quot;</span>
+					+ &quot;you would like to DELETE. \nThese are case sensitive. &quot;
+					+ &quot;Note that this action is PERMANENT. \n&quot;
+					+ &quot;Ensure that all funds are transferred off the account&quot;
+					+ &quot;before deletion. (Type 'cancel' to exit.)&quot;);
+<span class="fc" id="L488">			userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="fc" id="L489">			accountNames = userBalances.keySet();</span>
+<span class="fc" id="L490">			System.out.println(accountNames);</span>
+
+<span class="fc" id="L492">			input = scanner.nextLine();</span>
+<span class="pc bpc" id="L493" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="fc" id="L495">			userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+
+<span class="pc bpc" id="L497" title="1 of 2 branches missed.">			if (userAccount.getBalance() &gt; 0) {</span>
+<span class="nc" id="L498">				System.out.println(&quot;This account has a balance of $&quot; + userAccount.getBalance() + &quot;. &quot;</span>
+<span class="nc" id="L499">						+ &quot;Please transfer or withdraw this before deletion.&quot;);</span>
+<span class="nc" id="L500">				throw new CancelException(&quot;User has funds remaining on the account&quot;);</span>
+			}
+<span class="fc" id="L502">			System.out.println(&quot;Are you ABSOLUTELY SURE that you want to delete &quot; + input + &quot;? ('yes' or 'no')&quot;);</span>
+<span class="fc" id="L503">			input = normalize(scanner.nextLine());</span>
+<span class="pc bpc" id="L504" title="20 of 22 branches missed.">			switch(input) {</span>
+			case &quot;yes&quot;:
+			case &quot;ye&quot;:
+			case &quot;yeah&quot;:
+			case &quot;y&quot;:
+			case &quot;1&quot;:
+			case &quot;'yes'&quot;:
+			case &quot;ya&quot;:
+				break;
+<span class="nc" id="L513">			default: throw new CancelException(&quot;User changed their mind&quot;);</span>
+			}
+
+<span class="fc" id="L516">			userService.deleteAccount(currentUser.getUserID(), userAccount.getAccountName());</span>
+<span class="fc" id="L517">			System.out.println(userAccount.getAccountName() + &quot; successfully deleted.&quot;);</span>
+<span class="fc" id="L518">			log.traceExit(userAccount.getAccountName() + &quot; successfully deleted.&quot;);</span>
+<span class="pc" id="L519">		} catch(CancelException e) {</span>
+<span class="nc" id="L520">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L521">			log.traceExit(e);</span>
+<span class="nc" id="L522">		} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L523">			System.out.println(&quot;No account exists with that name.&quot;);</span>
+<span class="nc" id="L524">			log.traceExit(e);</span>
+		}
+<span class="fc" id="L526">	}</span>
+
+	private void createAccount(Scanner scanner) {
+<span class="fc" id="L529">		log.traceEntry();</span>
+<span class="fc" id="L530">		String accountName = &quot;&quot;;</span>
+		double initialDeposit;
+		try {
+<span class="nc" id="L533">			while(true) {</span>
+<span class="fc" id="L534">				System.out.println(&quot;Please enter a name for your account.&quot;);</span>
+<span class="fc" id="L535">				accountName = scanner.nextLine();</span>
+<span class="pc bpc" id="L536" title="1 of 2 branches missed.">				if (&quot;cancel&quot;.equals(normalize(accountName))) throw new CancelException();</span>
+<span class="pc bpc" id="L537" title="1 of 2 branches missed.">				if (userService.getBalance(currentUser.getUserID(), accountName).isPresent()) {</span>
+<span class="nc" id="L538">					System.out.println(&quot;You already have an existing account with that name.\n&quot;);</span>
+					continue;
+				}
+				break;
+			}
+
+<span class="fc" id="L544">			System.out.println(&quot;Please enter an initial deposit (optional)&quot;);</span>
+			try {
+<span class="fc" id="L546">				String temp = scanner.nextLine();</span>
+<span class="pc bpc" id="L547" title="1 of 2 branches missed.">				if (temp.charAt(0) == '$') {</span>
+<span class="nc" id="L548">					temp = temp.substring(1);</span>
+				}
+<span class="fc" id="L550">				initialDeposit = Double.parseDouble(temp);</span>
+<span class="pc bpc" id="L551" title="1 of 2 branches missed.">				initialDeposit = (initialDeposit &lt; 0) ? 0 : initialDeposit;</span>
+<span class="pc" id="L552">			} catch(NumberFormatException e) {</span>
+<span class="nc" id="L553">				initialDeposit = 0;</span>
+			}
+
+<span class="fc" id="L556">			userService.createAccount(currentUser.getUserID(), initialDeposit, accountName);</span>
+<span class="fc" id="L557">			log.traceExit(&quot;User successfully created an account: &quot; + accountName);</span>
+<span class="fc" id="L558">			System.out.println(accountName + &quot; successfully created! Your balance is $&quot; + initialDeposit);</span>
+
+<span class="pc" id="L560">		} catch(CancelException e) {</span>
+<span class="nc" id="L561">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L562">			log.traceExit(e);</span>
+		}
+<span class="fc" id="L564">	}</span>
+
+
+	private void getBalance(Scanner scanner) {
+<span class="fc" id="L568">		log.traceEntry();</span>
+<span class="fc" id="L569">		Map&lt;String, Double&gt; userBalances = null;</span>
+<span class="fc" id="L570">		Set&lt;String&gt; accountNames = null; </span>
+<span class="fc" id="L571">		String input = &quot;&quot;;</span>
+<span class="fc" id="L572">		BankAccount userAccount = null;</span>
+		try {
+<span class="fc" id="L574">			System.out.println(&quot;Your account names are displayed below. Enter the name of the account &quot;</span>
+					+ &quot;you would like to view.\nOtherwise, type anything and your &quot;
+					+ &quot;primary account will be chosen by default. \nThese are CASE SENSITIVE. (Type 'cancel' to exit.)\n&quot;);
+<span class="fc" id="L577">			userBalances = userService.getBalances(currentUser.getUserID()).get();</span>
+<span class="pc bpc" id="L578" title="1 of 2 branches missed.">			if (userBalances.size() == 0) throw new NoSuchElementException(&quot;No balances&quot;); // safety net</span>
+
+<span class="fc" id="L580">			accountNames = userBalances.keySet();</span>
+<span class="fc" id="L581">			System.out.println(accountNames);</span>
+
+<span class="fc" id="L583">			input = scanner.nextLine();</span>
+<span class="pc bpc" id="L584" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(input))) throw new CancelException();</span>
+
+<span class="pc bpc" id="L586" title="1 of 2 branches missed.">			if (!accountNames.contains(input)) {</span>
+				// set account name to default.
+<span class="fc" id="L588">				userAccount = bankAccountService.getAccount(currentUser.getUserID()).get();</span>
+
+<span class="fc" id="L590">			} else {</span>
+<span class="nc" id="L591">				userAccount = bankAccountService.getAccount(currentUser.getUserID(), input).get();</span>
+			}
+
+<span class="fc" id="L594">			System.out.println(&quot;You account information is displayed below: \n&quot;);</span>
+<span class="fc" id="L595">			System.out.println(userAccount + &quot;\n&quot;);</span>
+<span class="fc" id="L596">			log.traceExit(userAccount);</span>
+<span class="pc" id="L597">		} catch(CancelException e) {</span>
+<span class="nc" id="L598">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L599">			log.traceExit(e);</span>
+<span class="nc" id="L600">		} catch(NoSuchElementException e) {</span>
+<span class="nc" id="L601">			System.out.println(&quot;You don't have any accounts!&quot;);</span>
+<span class="nc" id="L602">			log.traceExit(e);</span>
+		}
+<span class="fc" id="L604">	}</span>
+
+
+	private void getBalances(Scanner scanner) {
+<span class="fc" id="L608">		log.traceEntry();</span>
+		try {
+<span class="fc" id="L610">			System.out.println(&quot;The following balances were found for &quot; + currentUser.getUsername() + &quot;: \n&quot;);</span>
+<span class="fc" id="L611">			System.out.println(userService.getBalances(currentUser.getUserID()).get());</span>
+<span class="pc" id="L612">		} catch (NoSuchElementException e) {</span>
+<span class="nc" id="L613">			System.out.println(&quot;No balances to display.&quot;);</span>
+<span class="nc" id="L614">			log.traceExit(e);</span>
+		}
+<span class="fc" id="L616">		log.traceExit();</span>
+<span class="fc" id="L617">	}</span>
+
+
+	// superuser
+	private void deleteUser(Scanner scanner) {
+<span class="fc" id="L622">		log.traceEntry();</span>
+<span class="fc" id="L623">		String doomedUser = &quot;&quot;;</span>
+<span class="fc" id="L624">		boolean repeat = true;</span>
+		try {
+			do {
+<span class="fc" id="L627">				System.out.println(&quot;Enter the name of the user you would like to delete, or 'cancel'.&quot;);</span>
+<span class="fc" id="L628">				doomedUser = scanner.nextLine();</span>
+<span class="pc bpc" id="L629" title="1 of 2 branches missed.">				if (&quot;cancel&quot;.equals(doomedUser)) throw new CancelException();</span>
+
+<span class="pc bpc" id="L631" title="1 of 2 branches missed.">				repeat = !superUserService.deleteUser(doomedUser);</span>
+<span class="pc bpc" id="L632" title="1 of 2 branches missed.">			} while (repeat);</span>
+<span class="fc" id="L633">			log.traceExit(&quot;Successfully deleted user&quot;);</span>
+<span class="pc" id="L634">		} catch(CancelException e) {</span>
+<span class="nc" id="L635">			log.traceExit(e);</span>
+<span class="nc" id="L636">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+		}	
+<span class="fc" id="L638">	}</span>
+
+
+	private void editUser(Scanner scanner) {
+<span class="fc" id="L642">		log.traceEntry();</span>
+<span class="fc" id="L643">		String thisUsername = null;</span>
+<span class="fc" id="L644">		boolean repeat = true;</span>
+<span class="fc" id="L645">		Optional&lt;User&gt; userOpt = Optional.empty();</span>
+		try {
+			do {
+<span class="fc" id="L648">				System.out.println(&quot;Enter the name of the user you would like to edit, or 'cancel'.&quot;);</span>
+<span class="fc" id="L649">				thisUsername = scanner.nextLine();</span>
+<span class="pc bpc" id="L650" title="1 of 2 branches missed.">				if (&quot;cancel&quot;.equals(thisUsername)) throw new CancelException();</span>
+
+<span class="fc" id="L652">				userOpt = superUserService.viewUser(thisUsername);</span>
+<span class="pc bpc" id="L653" title="1 of 2 branches missed.">				if (!userOpt.isPresent()) {</span>
+<span class="nc" id="L654">					System.out.println(&quot;Username is not present in our system. Check your spelling and try again.&quot;);</span>
+<span class="nc" id="L655">					continue;</span>
+				}
+
+				// user DOES exist in DB
+
+<span class="nc" id="L660">				while(true) {</span>
+<span class="fc" id="L661">					System.out.println(&quot;Would you like to edit this user's 'username' &quot; + thisUsername +</span>
+<span class="fc" id="L662">							&quot;, or their 'password' &quot; + userOpt.get().getPassword() + &quot;, or 'cancel' ?&quot;);</span>
+<span class="fc" id="L663">					String input = normalize(scanner.nextLine());</span>
+<span class="pc bpc" id="L664" title="1 of 2 branches missed.">					if (&quot;cancel&quot;.equals(input)) break;</span>
+<span class="pc bpc" id="L665" title="23 of 25 branches missed.">					switch(input) {</span>
+					case &quot;un&quot;:
+					case &quot;username&quot;:
+					case &quot;name&quot;:
+					case &quot;user&quot;:
+<span class="nc" id="L670">						while (true) {</span>
+<span class="nc" id="L671">							System.out.println(&quot;Enter a new username for this user.&quot;);</span>
+<span class="nc" id="L672">							input = scanner.nextLine();</span>
+<span class="nc bnc" id="L673" title="All 2 branches missed.">							if (&quot;cancel&quot;.equals(normalize(input))) break;</span>
+<span class="nc bnc" id="L674" title="All 2 branches missed.">							if (superUserService.changeUsername(thisUsername, input)) {</span>
+<span class="nc" id="L675">								repeat = false; // entire method was a success</span>
+<span class="nc" id="L676">								log.traceExit(&quot;Successfully changed a username&quot;);</span>
+<span class="nc" id="L677">								break; // break if new username is unique</span>
+							}
+<span class="nc" id="L679">							System.out.println(&quot;Duplicate username in database. Please try again.&quot;);</span>
+						}
+						break;
+					case &quot;pw&quot;:
+					case &quot;password&quot;:
+					case &quot;pass&quot;:
+					case &quot;word&quot;:
+<span class="fc" id="L686">						System.out.println(&quot;Enter a new password for this user.&quot;);</span>
+<span class="fc" id="L687">						input = scanner.nextLine();</span>
+<span class="pc bpc" id="L688" title="1 of 2 branches missed.">						if (&quot;cancel&quot;.equals(normalize(input))) break;</span>
+<span class="fc" id="L689">						superUserService.changePassword(thisUsername, input);</span>
+<span class="fc" id="L690">						repeat = false;</span>
+<span class="fc" id="L691">						log.traceExit(&quot;Successfully changed a password&quot;);</span>
+<span class="fc" id="L692">						break;</span>
+<span class="nc" id="L693">					default: System.out.println(&quot;I didn't understand that. Please try again.&quot;);</span>
+					continue;
+					}
+					break; // only occurs if
+				}
+<span class="pc bpc" id="L698" title="1 of 2 branches missed.">			} while(repeat);</span>
+
+<span class="pc" id="L700">		} catch(CancelException e) {</span>
+<span class="nc" id="L701">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L702">			log.traceExit(e);</span>
+		}
+
+<span class="fc" id="L705">	}</span>
+
+
+	private void viewUser(Scanner scanner) {
+<span class="nc" id="L709">		log.traceEntry();</span>
+<span class="nc" id="L710">		String input = &quot;&quot;;</span>
+<span class="nc" id="L711">		Optional&lt;User&gt; userOpt = Optional.empty();</span>
+		try {
+			while(true) {
+<span class="nc" id="L714">				System.out.println(&quot;Enter the name of the user you would like to view.&quot;);</span>
+<span class="nc" id="L715">				input = normalize(scanner.nextLine());</span>
+<span class="nc bnc" id="L716" title="All 2 branches missed.">				if (&quot;cancel&quot;.equals(input)) throw new CancelException();</span>
+
+<span class="nc" id="L718">				userOpt = superUserService.viewUser(input);</span>
+<span class="nc bnc" id="L719" title="All 2 branches missed.">				if (!userOpt.isPresent()) { // user doesnt exist in db</span>
+<span class="nc" id="L720">					System.out.println(&quot;User doesn't exist in database. Check your spelling and try again.&quot;);</span>
+<span class="nc" id="L721">					continue;</span>
+				}
+
+				// user IS present:
+<span class="nc" id="L725">				System.out.println(&quot;User was found in the database: &quot;);</span>
+<span class="nc" id="L726">				System.out.println(userOpt.get());</span>
+<span class="nc" id="L727">				log.traceExit(&quot;User found in database.&quot;);</span>
+				break;
+			}
+<span class="nc" id="L730">		} catch(CancelException e) {</span>
+<span class="nc" id="L731">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L732">			log.traceExit(e);</span>
+		}
+
+<span class="nc" id="L735">	}</span>
+
+
+	private void viewUsers(Scanner scanner) {
+<span class="fc" id="L739">		log.traceEntry();</span>
+<span class="fc" id="L740">		System.out.println(&quot;Here are all users in the database: &quot;);</span>
+<span class="fc" id="L741">		System.out.println(superUserService.viewUsers().get());</span>
+<span class="fc" id="L742">		log.traceExit();</span>
+<span class="fc" id="L743">	}</span>
+
+
+	private void createUser(Scanner scanner) {
+<span class="nc" id="L747">		log.traceEntry();</span>
+<span class="nc" id="L748">		String username_in = &quot;&quot;;</span>
+<span class="nc" id="L749">		String password_in = &quot;&quot;;</span>
+		try {
+			while(true) {
+<span class="nc" id="L752">				System.out.println(&quot;Enter a username for the new user: &quot;);</span>
+<span class="nc" id="L753">				username_in = scanner.nextLine();</span>
+<span class="nc bnc" id="L754" title="All 2 branches missed.">				if (&quot;cancel&quot;.equals(normalize(username_in))) throw new CancelException(&quot;cancelled @ username&quot;);</span>
+<span class="nc bnc" id="L755" title="All 2 branches missed.">				if (superUserService.viewUser(username_in).isPresent()) {</span>
+<span class="nc" id="L756">					System.out.println(&quot;User already exists in the database. Please choose a UNIQUE username.&quot;);</span>
+<span class="nc" id="L757">					continue;</span>
+				}
+<span class="nc" id="L759">				System.out.println(&quot;Enter a password for the new user: &quot;);</span>
+<span class="nc bnc" id="L760" title="All 2 branches missed.">				if (&quot;cancel&quot;.equals(normalize(password_in))) throw new CancelException(&quot;cancelled @ password&quot;);</span>
+<span class="nc" id="L761">				password_in = scanner.nextLine();</span>
+<span class="nc" id="L762">				superUserService.createUser(username_in, password_in);</span>
+<span class="nc" id="L763">				System.out.println(&quot;Successfully inserted &quot; + username_in + &quot; into Users.&quot;);</span>
+<span class="nc" id="L764">				log.traceExit(&quot;Successfully created &quot; + username_in);</span>
+				break;
+			}
+<span class="nc" id="L767">		} catch(CancelException e) {</span>
+<span class="nc" id="L768">			System.out.println(&quot;Cancelled action.\n&quot;);</span>
+<span class="nc" id="L769">			log.traceExit(e);</span>
+		}
+
+<span class="nc" id="L772">	}</span>
+
+
+	private void entry(Scanner scanner) throws CancelException{
+<span class="fc bfc" id="L776" title="All 2 branches covered.">		while (!currentUser.isLoggedIn()) {</span>
+<span class="fc" id="L777">			System.out.println(&quot;Would you like to 'log in' as an existing user or 'register' as a new user?\n&quot;);</span>
+<span class="fc" id="L778">			String input = scanner.nextLine();</span>
+<span class="fc bfc" id="L779" title="All 2 branches covered.">			if (&quot;cancel&quot;.equals(normalize(input))) {</span>
+<span class="fc" id="L780">				throw new CancelException();</span>
+			}
+			try {
+<span class="fc" id="L783">				input = decipher(input);</span>
+<span class="fc bfc" id="L784" title="All 2 branches covered.">				if (input.equals(&quot;login&quot;)){</span>
+<span class="fc" id="L785">					login(scanner);</span>
+<span class="pc bpc" id="L786" title="1 of 2 branches missed.">				} else if (input.equals(&quot;register&quot;)){</span>
+<span class="fc" id="L787">					register(scanner);</span>
+<span class="fc" id="L788">				}</span>
+				else {
+<span class="nc" id="L790">					throw new InvalidInputException();</span>
+				}
+<span class="nc" id="L792">			} catch (InvalidInputException e) {</span>
+<span class="nc" id="L793">				System.out.println(&quot;Invalid input. Please try again.&quot;);</span>
+<span class="fc" id="L794">			} catch (CancelException e){</span>
+<span class="fc" id="L795">				log.trace(&quot;User backed out of log in or register.&quot;);</span>
+			}
+		}
+<span class="fc" id="L798">	}</span>
+
+
+	private void login(Scanner scanner) throws CancelException{
+<span class="fc" id="L802">		String username = &quot;&quot;;</span>
+<span class="fc" id="L803">		String password = &quot;&quot;;</span>
+<span class="fc" id="L804">		User existingUser = null;</span>
+<span class="fc" id="L805">		SuperUser existingSuperUser = null;</span>
+
+<span class="pc bpc" id="L807" title="1 of 2 branches missed.">		while(!currentUser.isLoggedIn()) { // existing user wants to log in</span>
+<span class="fc" id="L808">			System.out.println(&quot;Please enter your username then press enter.&quot;);</span>
+<span class="fc" id="L809">			username = scanner.nextLine().trim();</span>
+<span class="pc bpc" id="L810" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(username)) {</span>
+<span class="nc" id="L811">				throw new CancelException();</span>
+			}
+<span class="fc" id="L813">			System.out.println(&quot;Please enter your password then press enter.&quot;);</span>
+<span class="fc" id="L814">			password = scanner.nextLine().trim();</span>
+<span class="fc bfc" id="L815" title="All 2 branches covered.">			if (&quot;cancel&quot;.equals(password)){</span>
+<span class="fc" id="L816">				throw new CancelException();</span>
+			}
+
+			try {
+<span class="fc bfc" id="L820" title="All 2 branches covered.">				if (superUserService.getSuperUser(username).isPresent()) { // this is a superuser</span>
+<span class="fc" id="L821">					existingSuperUser = superUserService.getSuperUser(username).get();</span>
+<span class="pc bpc" id="L822" title="1 of 2 branches missed.">					if (password.equals(existingSuperUser.getPassword())) { // correct PW!</span>
+<span class="fc" id="L823">						currentUser.setUsername(username);</span>
+<span class="fc" id="L824">						currentUser.setPassword(password);</span>
+<span class="fc" id="L825">						currentUser.setUserID(existingSuperUser.getUserID());</span>
+<span class="fc" id="L826">						currentUser.setSuperUser(true);</span>
+<span class="fc" id="L827">						currentUser.setLoggedIn(true);</span>
+<span class="fc" id="L828">						log.traceExit();</span>
+<span class="fc" id="L829">						break;</span>
+					}
+				}
+<span class="fc bfc" id="L832" title="All 2 branches covered.">				if (userService.getUser(username).isPresent()){ // optimize this?</span>
+<span class="fc" id="L833">					existingUser = UserService.getService().getUser(username).get(); </span>
+<span class="pc bpc" id="L834" title="1 of 2 branches missed.">					if (password.equals(existingUser.getPassword())) { // correct PW!</span>
+<span class="fc" id="L835">						currentUser.setUsername(username);</span>
+<span class="fc" id="L836">						currentUser.setPassword(password);</span>
+<span class="fc" id="L837">						currentUser.setUserID(existingUser.getUserID());</span>
+<span class="fc" id="L838">						currentUser.setSuperUser(false);</span>
+<span class="fc" id="L839">						currentUser.setLoggedIn(true);</span>
+<span class="fc" id="L840">						log.traceExit();</span>
+<span class="fc" id="L841">						break;</span>
+					}
+				}
+
+<span class="pc bpc" id="L845" title="1 of 2 branches missed.">				if (superUserService.getSuperUser(username).isPresent() || </span>
+<span class="pc bpc" id="L846" title="1 of 2 branches missed.">						UserService.getService().getUser(username).isPresent()) {</span>
+					// username exists in db, but invalid PW
+<span class="nc" id="L848">					throw new PasswordException();</span>
+				} else {
+					// username does not exist in DB
+<span class="fc" id="L851">					throw new NoSuchElementException();</span>
+				}
+<span class="fc" id="L853">			} catch (NoSuchElementException e) {</span>
+<span class="fc" id="L854">				System.out.println(&quot;Username does not exist in the database.&quot;);</span>
+<span class="nc" id="L855">			} catch (PasswordException e) {</span>
+<span class="nc" id="L856">				System.out.println(&quot;Invalid password&quot;);</span>
+			}
+		}
+<span class="fc" id="L859">	}</span>
+
+
+	private void register(Scanner scanner) throws CancelException{
+<span class="fc" id="L863">		String username = &quot;&quot;;</span>
+<span class="fc" id="L864">		String password = &quot;&quot;;</span>
+<span class="fc" id="L865">		User registeredUser = null;</span>
+<span class="fc bfc" id="L866" title="All 2 branches covered.">		while(!currentUser.isLoggedIn()) { // new user wants to register</span>
+<span class="fc" id="L867">			System.out.println(&quot;Please enter a username.&quot;);</span>
+<span class="fc" id="L868">			username = scanner.nextLine().trim();</span>
+<span class="pc bpc" id="L869" title="1 of 2 branches missed.">			if (&quot;cancel&quot;.equals(normalize(username))) throw new CancelException();</span>
+<span class="fc" id="L870">			System.out.println(&quot;Please enter a password.&quot;);</span>
+<span class="fc" id="L871">			password = scanner.nextLine().trim();</span>
+<span class="fc bfc" id="L872" title="All 2 branches covered.">			if (&quot;cancel&quot;.equals(normalize(password))) throw new CancelException();</span>
+			try {
+				try {
+<span class="nc" id="L875">					superUserService.getSuperUser(username).get();</span>
+<span class="nc" id="L876">					throw new CancelException(); // throw if it DOES exist</span>
+<span class="fc" id="L877">				} catch (NoSuchElementException e) {</span>
+				}
+
+				try {
+<span class="fc" id="L881">					registeredUser = superUserService.createUser(username, password).get();</span>
+<span class="fc" id="L882">				} catch (NoSuchElementException e) {</span>
+<span class="fc" id="L883">					throw new CancelException(); // throw if creation FAILS</span>
+				}
+<span class="fc" id="L885">				currentUser.setUsername(username);</span>
+<span class="fc" id="L886">				currentUser.setPassword(password);</span>
+<span class="fc" id="L887">				currentUser.setSuperUser(false);</span>
+<span class="fc" id="L888">				currentUser.setUserID(registeredUser.getUserID());</span>
+<span class="fc" id="L889">				currentUser.setLoggedIn(true);</span>
+<span class="fc" id="L890">				System.out.println(&quot;Successfully created account &quot; + username + &quot; You are now logged in.\n&quot;);</span>
+<span class="fc" id="L891">			} catch (CancelException e) {</span>
+<span class="fc" id="L892">				System.out.println(&quot;That username already exists in the database. Please enter a unique username.&quot;);</span>
+<span class="fc" id="L893">				log.traceExit(e.getMessage());</span>
+			}
+		}
+<span class="fc" id="L896">	}</span>
+
+
+	private String decipher(String gibberish) throws CancelException, InvalidInputException{
+<span class="fc" id="L900">		gibberish = normalize(gibberish); // no spaces, all lower case</span>
+<span class="pc bpc" id="L901" title="1 of 2 branches missed.">		if (&quot;cancel&quot;.equals(gibberish)) throw new CancelException();</span>
+
+<span class="fc bfc" id="L903" title="All 2 branches covered.">		if (!currentUser.isLoggedIn()) { // not logged in</span>
+<span class="pc bpc" id="L904" title="40 of 46 branches missed.">			switch(gibberish) {</span>
+			case &quot;login&quot;: 
+			case &quot;logon&quot;:
+			case &quot;log on&quot;:
+			case &quot;log&quot;:
+			case &quot;existing&quot;:
+			case &quot;current&quot;:
+			case &quot;l&quot;:
+<span class="fc" id="L912">				return &quot;login&quot;;</span>
+			case &quot;register&quot;: 
+			case &quot;reg&quot;: 
+			case &quot;registor&quot;:
+			case &quot;registr&quot;:
+			case &quot;new&quot;:
+			case &quot;r&quot;:
+<span class="fc" id="L919">				return &quot;register&quot;;</span>
+			case &quot;break&quot;:
+			case &quot;quit&quot;:
+<span class="nc" id="L922">			default: throw new InvalidInputException();</span>
+			}
+		}
+<span class="fc bfc" id="L925" title="All 2 branches covered.">		if (currentUser.isSuperUser()) { // superusers only</span>
+<span class="pc bpc" id="L926" title="80 of 91 branches missed.">			switch(gibberish) {</span>
+			case &quot;createuser&quot;:
+			case &quot;create&quot;:
+			case &quot;c&quot;:
+			case &quot;newuser&quot;:
+			case &quot;new&quot;:
+<span class="nc" id="L932">				return &quot;createuser&quot;;</span>
+			case &quot;viewusers&quot;:
+			case &quot;view&quot;:
+			case &quot;viewall&quot;:
+			case &quot;all&quot;:
+<span class="fc" id="L937">				return &quot;viewusers&quot;;</span>
+			case &quot;viewuser&quot;:
+			case &quot;single&quot;:
+			case &quot;viewone&quot;:
+			case &quot;viewspecific&quot;:
+<span class="nc" id="L942">				return &quot;viewuser&quot;;</span>
+			case &quot;edituser&quot;:
+			case &quot;edit&quot;:
+			case &quot;e&quot;:
+<span class="fc" id="L946">				return &quot;edituser&quot;;</span>
+			case &quot;deleteuser&quot;:
+			case &quot;delete&quot;:
+			case &quot;del&quot;:
+			case &quot;d&quot;:
+<span class="fc" id="L951">				return &quot;deleteuser&quot;;</span>
+			case &quot;help&quot;:
+			case &quot;h&quot;:
+			case &quot;man&quot;:
+			case &quot;?&quot;:
+<span class="fc" id="L956">				return &quot;help&quot;;</span>
+			case &quot;logout&quot;:
+			case &quot;log&quot;:
+			case &quot;out&quot;:
+			case &quot;cancel&quot;:
+			case &quot;break&quot;:
+			case &quot;l&quot;:
+<span class="fc" id="L963">				return &quot;logout&quot;;</span>
+			default:
+<span class="fc" id="L965">				throw new InvalidInputException();</span>
+			}
+		} else { // Normal user
+<span class="pc bpc" id="L968" title="166 of 184 branches missed.">			switch(gibberish) {</span>
+			case &quot;getbalances&quot;:
+			case &quot;balances&quot;:
+			case &quot;viewall&quot;:
+			case &quot;viewallbalances&quot;:
+			case &quot;all&quot;:
+			case &quot;viewbalances&quot;:
+<span class="fc" id="L975">				return &quot;getbalances&quot;;</span>
+			case &quot;view&quot;:
+			case &quot;getbalance&quot;:
+			case &quot;single&quot;:
+			case &quot;viewbalance&quot;:
+			case &quot;one&quot;:
+			case &quot;viewonebalance&quot;:
+			case &quot;viewone&quot;:
+			case &quot;getsinglebalance&quot;:
+			case &quot;getsingle&quot;:
+			case &quot;viewsingle&quot;:
+<span class="fc" id="L986">				return &quot;getbalance&quot;;</span>
+			case &quot;createaccount&quot;:
+			case &quot;create&quot;:
+			case &quot;new&quot;:
+			case &quot;newaccount&quot;:
+			case &quot;newbalance&quot;:
+<span class="fc" id="L992">				return &quot;createaccount&quot;;</span>
+			case &quot;deleteaccount&quot;:
+			case &quot;delete&quot;:
+			case &quot;remove&quot;:
+			case &quot;del&quot;:
+			case &quot;removeaccount&quot;:
+			case &quot;delaccount&quot;:
+<span class="fc" id="L999">				return &quot;deleteaccount&quot;;</span>
+			case &quot;transfer&quot;:
+			case &quot;transferfunds&quot;:
+			case &quot;transfermoney&quot;:
+			case &quot;t&quot;:
+			case &quot;tr&quot;:
+<span class="fc" id="L1005">				return &quot;transfer&quot;;</span>
+			case &quot;sendmoney&quot;:
+			case &quot;send&quot;:
+			case &quot;sendfunds&quot;:
+			case &quot;pay&quot;:
+			case &quot;makepayment&quot;:
+<span class="fc" id="L1011">				return &quot;sendmoney&quot;;</span>
+			case &quot;deposit&quot;:
+			case &quot;d&quot;:
+			case &quot;depo&quot;:
+			case &quot;drop&quot;:
+			case &quot;give&quot;:
+			case &quot;deposits&quot;:
+<span class="nc" id="L1018">				return &quot;deposit&quot;;</span>
+			case &quot;withdraw&quot;:
+			case &quot;take&quot;:
+			case &quot;w&quot;:
+<span class="fc" id="L1022">				return &quot;withdraw&quot;;</span>
+			case &quot;viewhistory&quot;:
+			case &quot;history&quot;:
+			case &quot;transactionhistory&quot;:
+			case &quot;transaction&quot;:
+			case &quot;transactions&quot;:
+<span class="nc" id="L1028">				return &quot;viewhistory&quot;;</span>
+			case &quot;help&quot;:
+			case &quot;h&quot;:
+			case &quot;man&quot;:
+			case &quot;?&quot;:
+<span class="fc" id="L1033">				return &quot;help&quot;;</span>
+			case &quot;logout&quot;:
+			case &quot;log&quot;:
+			case &quot;out&quot;:
+			case &quot;cancel&quot;:
+			case &quot;break&quot;:
+			case &quot;l&quot;:
+<span class="fc" id="L1040">				return &quot;logout&quot;;</span>
+<span class="nc" id="L1041">			default: throw new InvalidInputException();</span>
+			}
+		}
+	}
+
+
+	private void reset() {
+<span class="fc" id="L1048">		this.currentUser = new CurrentUser();</span>
+<span class="fc" id="L1049">	}</span>
+
+
+
+	private String normalize(String s) { // used to fix user input
+<span class="fc" id="L1054">		return s.replaceAll(&quot;\\s&quot;,&quot;&quot;).toLowerCase(); </span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

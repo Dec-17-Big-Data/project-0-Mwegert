@@ -158,7 +158,7 @@ begin
     insert into accounts values (account_id_counter.nextval, name_INPUT, initial_deposit, user_id_INPUT);
 end addAccountByUsername;
 /
-
+commit;
 create or replace procedure addAccountbyUserID(user_id_INPUT number, initial_deposit binary_float, name_INPUT varchar2) as
 begin
     insert into accounts values (account_id_counter.nextval, name_INPUT, initial_deposit, user_id_INPUT);
@@ -286,13 +286,14 @@ create or replace procedure getLargestBalance(user_id_INPUT number, accountName 
 highestbalance accounts.balance%type;
 maxaccountid accounts.account_id%type;
 begin
+    --if (count(max(balance)) from accounts where user_id = user_id_INPUT)
     select max(balance) into highestbalance from accounts where user_id = user_id_INPUT;
     select account_id into maxaccountid from accounts where balance = highestbalance and user_id = user_id_INPUT;
     select balance into currentBalance from accounts where account_id = maxaccountid;
     select name into accountName from accounts where account_id = maxaccountid;
 end getLargestBalance;
 /
-
+commit;
 create or replace procedure getAccount(account_ID_OUTPUT out number, name_INPUT varchar2, balance_OUTPUT out binary_float, user_id_INPUT number) as
 begin
     select account_id into account_ID_OUTPUT from accounts where name = name_INPUT and user_id = user_id_INPUT;

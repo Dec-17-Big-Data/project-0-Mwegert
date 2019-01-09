@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BankAccountService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JBDCBank</a> &gt; <a href="index.source.html" class="el_package">com.revature.services</a> &gt; <span class="el_source">BankAccountService.java</span></div><h1>BankAccountService.java</h1><pre class="source lang-java linenums">package com.revature.services;
+
+import java.util.Optional;
+
+import com.revature.bank.BankAccount;
+import com.revature.bank.BankAccountDao;
+import com.revature.bank.BankAccountOracle;
+
+public class BankAccountService {
+	
+	private static BankAccountService bankAccountService;
+<span class="fc" id="L12">	final static BankAccountDao bankAccountDao = BankAccountOracle.getDao();</span>
+	
+<span class="fc" id="L14">	private BankAccountService() {}</span>
+	
+	public static BankAccountService getService() {
+<span class="fc bfc" id="L17" title="All 2 branches covered.">		if (bankAccountService == null) {</span>
+<span class="fc" id="L18">			bankAccountService = new BankAccountService();</span>
+		}
+<span class="fc" id="L20">		return bankAccountService;</span>
+	}
+	
+	public Optional&lt;BankAccount&gt; getAccount(int userID, String name){
+<span class="fc" id="L24">		return bankAccountDao.getAccount(userID, name);</span>
+	}
+	
+	public Optional&lt;BankAccount&gt; getAccount(int userID){
+<span class="fc" id="L28">		return bankAccountDao.getAccount(userID);</span>
+	}
+	
+	public void deposit(int accountID, double amount) {
+<span class="fc" id="L32">		bankAccountDao.deposit(accountID, amount);</span>
+<span class="fc" id="L33">	}</span>
+	
+	public boolean withdraw(int accountID, double amount) {
+<span class="fc" id="L36">		return bankAccountDao.withdraw(accountID, amount);</span>
+	}
+	
+	public boolean sendMoney(int accountOneID, int accountTwoID, double amount) {
+<span class="fc" id="L40">		return bankAccountDao.sendMoney(accountOneID, accountTwoID, amount);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

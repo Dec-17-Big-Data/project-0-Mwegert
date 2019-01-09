@@ -8,6 +8,7 @@ import com.revature.bank.TransactionDao;
 import com.revature.bank.TransactionOracle;
 
 public class TransactionService {
+	
 	private static TransactionService transactionService;
 	static final TransactionDao transactionDao = TransactionOracle.getDao();
 	

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CurrentUser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JBDCBank</a> &gt; <a href="index.source.html" class="el_package">com.revature.bank</a> &gt; <span class="el_source">CurrentUser.java</span></div><h1>CurrentUser.java</h1><pre class="source lang-java linenums">package com.revature.bank;
+
+public class CurrentUser { // singleton that stores all the session data.
+<span class="pc" id="L4">	private boolean superUser = false;</span>
+<span class="pc" id="L5">	private boolean loggedIn = false;</span>
+<span class="pc" id="L6">	private String username = &quot;&quot;;</span>
+<span class="pc" id="L7">	private String password = &quot;&quot;;</span>
+	private int userID;
+	
+<span class="fc" id="L10">	public CurrentUser() {}</span>
+	
+	public boolean isSuperUser() {
+<span class="fc" id="L13">		return superUser;</span>
+	}
+	public void setSuperUser(boolean superUser) {
+<span class="fc" id="L16">		this.superUser = superUser;</span>
+<span class="fc" id="L17">	}</span>
+	public boolean isLoggedIn() {
+<span class="fc" id="L19">		return loggedIn;</span>
+	}
+	public void setLoggedIn(boolean loggedIn) {
+<span class="fc" id="L22">		this.loggedIn = loggedIn;</span>
+<span class="fc" id="L23">	}</span>
+	public String getUsername() {
+<span class="fc" id="L25">		return username;</span>
+	}
+	public void setUsername(String username) {
+<span class="fc" id="L28">		this.username = username;</span>
+<span class="fc" id="L29">	}</span>
+	public String getPassword() {
+<span class="nc" id="L31">		return password;</span>
+	}
+	public void setPassword(String password) {
+<span class="fc" id="L34">		this.password = password;</span>
+<span class="fc" id="L35">	}</span>
+	public int getUserID() {
+<span class="fc" id="L37">		return userID;</span>
+	}
+	public void setUserID(int userID) {
+<span class="fc" id="L40">		this.userID = userID;</span>
+<span class="fc" id="L41">	}</span>
+	@Override
+	public int hashCode() {
+<span class="nc" id="L44">		final int prime = 31;</span>
+<span class="nc" id="L45">		int result = 1;</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">		result = prime * result + (loggedIn ? 1231 : 1237);</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">		result = prime * result + ((password == null) ? 0 : password.hashCode());</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">		result = prime * result + (superUser ? 1231 : 1237);</span>
+<span class="nc" id="L49">		result = prime * result + userID;</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">		result = prime * result + ((username == null) ? 0 : username.hashCode());</span>
+<span class="nc" id="L51">		return result;</span>
+	}
+	@Override
+	public boolean equals(Object obj) {
+<span class="nc bnc" id="L55" title="All 2 branches missed.">		if (this == obj)</span>
+<span class="nc" id="L56">			return true;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">		if (obj == null)</span>
+<span class="nc" id="L58">			return false;</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">		if (getClass() != obj.getClass())</span>
+<span class="nc" id="L60">			return false;</span>
+<span class="nc" id="L61">		CurrentUser other = (CurrentUser) obj;</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		if (loggedIn != other.loggedIn)</span>
+<span class="nc" id="L63">			return false;</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">		if (password == null) {</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">			if (other.password != null)</span>
+<span class="nc" id="L66">				return false;</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">		} else if (!password.equals(other.password))</span>
+<span class="nc" id="L68">			return false;</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">		if (superUser != other.superUser)</span>
+<span class="nc" id="L70">			return false;</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">		if (userID != other.userID)</span>
+<span class="nc" id="L72">			return false;</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">		if (username == null) {</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">			if (other.username != null)</span>
+<span class="nc" id="L75">				return false;</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		} else if (!username.equals(other.username))</span>
+<span class="nc" id="L77">			return false;</span>
+<span class="nc" id="L78">		return true;</span>
+	}
+	@Override
+	public String toString() {
+<span class="nc" id="L82">		return &quot;CurrentUser [superUser=&quot; + superUser + &quot;, loggedIn=&quot; + loggedIn + &quot;, username=&quot; + username</span>
+<span class="nc" id="L83">				+ &quot;, password=&quot; + password + &quot;, userID=&quot; + userID + &quot;]&quot;;</span>
+	}
+	public CurrentUser(boolean superUser, boolean loggedIn, String username, String password, int userID) {
+<span class="nc" id="L86">		super();</span>
+<span class="nc" id="L87">		this.superUser = superUser;</span>
+<span class="nc" id="L88">		this.loggedIn = loggedIn;</span>
+<span class="nc" id="L89">		this.username = username;</span>
+<span class="nc" id="L90">		this.password = password;</span>
+<span class="nc" id="L91">		this.userID = userID;</span>
+<span class="nc" id="L92">	}</span>
+	
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

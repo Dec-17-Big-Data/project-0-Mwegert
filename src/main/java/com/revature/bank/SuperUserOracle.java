@@ -50,7 +50,6 @@ public class SuperUserOracle implements SuperUserDao{
 			
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
-			System.out.println("That username is already taken, or a database error has occurred. Please try again.");
 		}
 		log.traceExit("Failed to add new user due to duplicate username or SQL exception");
 		return Optional.empty();
@@ -117,17 +116,20 @@ public class SuperUserOracle implements SuperUserDao{
 		if (succeeded == 1) {
 			System.out.println("Successfully updated " + username + " to " + newUsername + "\n");
 			log.traceExit("Successfully updated " + username + " to " + newUsername);
+			cb.close();
 			return true;
 		}
 		
 		System.out.println("That username was not found. Check your spelling and try again.");
 		log.traceExit("Successfully executed procedure. Nothing updated.");
+		cb.close();
 		return false;
 		} catch(SQLException e) {
 			log.traceExit(e.getMessage());
 		}
 		
 		log.traceExit("SQL Exception when trying to update a username.");
+		
 		return false;
 	}
 
@@ -152,11 +154,13 @@ public class SuperUserOracle implements SuperUserDao{
 			if (succeeded == 1) {
 				System.out.println("Successfully updated " + username + "'s password to " + newPassword);
 				log.traceExit("Successfully updated " + username + "'s password to " + newPassword);
+				cb.close();
 				return true;
 			}
 			
 			System.out.println("That username was not found. Check your spelling and try again.");
 			log.traceExit("Successfully executed procedure. Nothing updated.");
+			cb.close();
 			return false;
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
@@ -188,11 +192,12 @@ public class SuperUserOracle implements SuperUserDao{
 			if (succeeded == 1) {
 				System.out.println("Successfully deleted " + username + " from users");
 				log.traceExit("Successfully deleted " + username + " from users");
+				cb.close();
 				return true;
 			}
 			System.out.println("That username was not found. Check your spelling and try again.");
 			log.traceExit("Successfully executed procedure. Nothing deleted.");
-			
+			cb.close();
 		} catch (SQLException e) {
 			log.traceExit(e.getMessage());
 			System.out.println("Action cannot be completed due to a database error. Please try again.");
@@ -220,6 +225,7 @@ public class SuperUserOracle implements SuperUserDao{
 			cb.execute();
 			
 			if (cb.getString(2) == null) {
+				cb.close();
 				throw new SQLException("Username does not exist in database.");
 			}
 			return Optional.of(new User(username, cb.getString(2), cb.getInt(3), cb.getInt(4), cb.getDouble(5)));
@@ -277,6 +283,7 @@ public class SuperUserOracle implements SuperUserDao{
 			cb.execute();
 			
 			if (cb.getString(2) == null) {
+				cb.close();
 				throw new SQLException("SuperUserID does not exist in database.");
 			}
 			log.traceExit("Successfully returned non null superuser");

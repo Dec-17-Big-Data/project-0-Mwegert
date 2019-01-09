@@ -71,8 +71,8 @@ public class UserOracle implements UserDao{
 			return Optional.empty();
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call getLargestBalance(?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call getLargestBalance(?,?,?)");){
+			
 			cb.setInt(1, userID);
 			cb.registerOutParameter(2, java.sql.Types.VARCHAR); // account name
 			cb.registerOutParameter(3, java.sql.Types.FLOAT); // largest balance
@@ -96,8 +96,8 @@ public class UserOracle implements UserDao{
 			return Optional.empty();
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call getBalance(?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call getBalance(?,?,?)");){
+			
 			cb.setString(1, accountName);
 			cb.setInt(2, userID);
 			cb.registerOutParameter(3, java.sql.Types.FLOAT); // balance
@@ -107,7 +107,6 @@ public class UserOracle implements UserDao{
 			DecimalFormat df = new DecimalFormat("#########.##");
 			return Optional.of(Double.parseDouble(df.format(cb.getDouble(3))));
 		} catch (SQLException e) {
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 			log.traceExit(e);
 		}
 		return Optional.empty();
@@ -122,8 +121,8 @@ public class UserOracle implements UserDao{
 			return false;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call addAccountByUserID(?,?,?)");
+		try(CallableStatement cb = con.prepareCall("call addAccountByUserID(?,?,?)");){
+			
 			cb.setInt(1, userID);
 			cb.setDouble(2, initialDeposit);
 			cb.setString(3, accountName);
@@ -149,8 +148,8 @@ public class UserOracle implements UserDao{
 			return false;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call addAccountByUsername(?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call addAccountByUsername(?,?,?)");){
+			
 			cb.setString(1, accountName);
 			cb.setDouble(2, initialDeposit);
 			cb.setString(3, username);
@@ -176,8 +175,8 @@ public class UserOracle implements UserDao{
 			return false;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call deleteAccountbyUserID(?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call deleteAccountbyUserID(?,?,?)");){
+			
 			cb.setInt(1, userID);
 			cb.setString(2, accountName);
 			cb.registerOutParameter(3, java.sql.Types.INTEGER);
@@ -188,7 +187,6 @@ public class UserOracle implements UserDao{
 			log.traceExit();
 			return true;
 		} catch (SQLException e) {
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 			log.traceExit(e);
 		}
 		return false;
@@ -204,8 +202,8 @@ public class UserOracle implements UserDao{
 			return false;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call transferFundsbyUserID(?,?,?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call transferFundsbyUserID(?,?,?,?,?)");){
+			
 			//(name1 varchar2, name2 varchar2, transfer_amount binary_float, user_id_INPUT number, succeeded out number)
 			cb.setString(1, account1);
 			cb.setString(2, account2);
@@ -222,7 +220,6 @@ public class UserOracle implements UserDao{
 			System.out.println("Transfer aborted due to insufficient funds.");
 			log.traceExit("Transfer aborted due to insufficient  funds.");
 		} catch (SQLException e) {
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 			log.traceExit(e);
 		}
 
@@ -238,8 +235,8 @@ public class UserOracle implements UserDao{
 			return Optional.empty();
 		}
 		
-		try {
-			CallableStatement cb = con.prepareCall("call getUserInfo(?,?,?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call getUserInfo(?,?,?,?,?)");){
+			
 			//(username_INPUT varchar2, password_OUT out varchar2, user_id_OUT out number, 
 			// numAccounts out number, totalbalance out binary_float)
 			cb.setString(1, username);

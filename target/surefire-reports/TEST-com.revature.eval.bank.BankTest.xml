@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="36" failures="0" name="com.revature.eval.bank.BankTest" time="12.259" errors="0" skipped="0">
+  <properties>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_191\jre\bin"/>
+    <property name="java.vm.version" value="25.191-b12"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="maven.multiModuleProjectDirectory" value="C:/Users/mason/OneDrive/Documents/Revature-Code/JBDCBank"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="path.separator" value=";"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.script" value=""/>
+    <property name="user.country" value="US"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="C:\Users\mason\OneDrive\Documents\Revature-Code\JBDCBank"/>
+    <property name="java.runtime.version" value="1.8.0_191-b12"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.Win32GraphicsEnvironment"/>
+    <property name="java.endorsed.dirs" value="C:\Program Files\Java\jdk1.8.0_191\jre\lib\endorsed"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.io.tmpdir" value="C:\Users\mason\AppData\Local\Temp\"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.variant" value=""/>
+    <property name="os.name" value="Windows 10"/>
+    <property name="classworlds.conf" value="C:/Program Files/apache-maven-3.6.0/bin/m2.conf"/>
+    <property name="sun.jnu.encoding" value="Cp1252"/>
+    <property name="java.library.path" value="C:\Program Files\Java\jdk1.8.0_191\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Users\mason\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\local\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\usr\bin;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\mason\bin;C:\Program Files\Java\jre1.8.0_191\bin\server;C:\Program Files\Java\jre1.8.0_191\bin;C:\Program Files\Java\jre1.8.0_191\lib\amd64;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\dotnet;C:\Program Files\Microsoft SQL Server\130\Tools\Binn;C:\WINDOWS\System32\OpenSSH;C:\Program Files\Git\cmd;C:\Program Files\Java\jdk-11.0.1\bin;C:\Program Files\apache-maven-3.6.0\bin;C:\Users\mason\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Python 3.7;C:\Users\mason\bin;C:\Users\mason\AppData\Local\Programs\Python\Python37-32\Scripts;C:\Users\mason\AppData\Local\Programs\Python\Python37-32;C:\Users\mason\AppData\Local\Microsoft\WindowsApps;C:\Users\mason\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\mason\Downloads\spring-tool-suite-4-4.0.2.RELEASE-e4.9.0-win32.win32.x86_64\sts-4.0.2.RELEASE;C:\Program Files\Git\usr\bin\vendor_perl;C:\Program Files\Git\usr\bin\core_perl;."/>
+    <property name="maven.conf" value="C:/Program Files/apache-maven-3.6.0/conf"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="10.0"/>
+    <property name="library.jansi.path" value="C:/Program Files/apache-maven-3.6.0/lib/jansi-native"/>
+    <property name="user.home" value="C:\Users\mason"/>
+    <property name="user.timezone" value="America/New_York"/>
+    <property name="java.awt.printerjob" value="sun.awt.windows.WPrinterJob"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="file.encoding" value="Cp1252"/>
+    <property name="user.name" value="mason"/>
+    <property name="java.class.path" value="C:/Program Files/apache-maven-3.6.0/boot/plexus-classworlds-2.5.2.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="C:\Program Files\Java\jdk1.8.0_191\jre"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher test"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="sun.awt.windows.WToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.8.0_191"/>
+    <property name="java.ext.dirs" value="C:\Program Files\Java\jdk1.8.0_191\jre\lib\ext;C:\WINDOWS\Sun\Java\lib\ext"/>
+    <property name="sun.boot.class.path" value="C:\Program Files\Java\jdk1.8.0_191\jre\lib\resources.jar;C:\Program Files\Java\jdk1.8.0_191\jre\lib\rt.jar;C:\Program Files\Java\jdk1.8.0_191\jre\lib\sunrsasign.jar;C:\Program Files\Java\jdk1.8.0_191\jre\lib\jsse.jar;C:\Program Files\Java\jdk1.8.0_191\jre\lib\jce.jar;C:\Program Files\Java\jdk1.8.0_191\jre\lib\charsets.jar;C:\Program Files\Java\jdk1.8.0_191\jre\lib\jfr.jar;C:\Program Files\Java\jdk1.8.0_191\jre\classes"/>
+    <property name="sun.stderr.encoding" value="cp437"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="maven.home" value="C:\Program Files\apache-maven-3.6.0"/>
+    <property name="file.separator" value="\"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="sun.stdout.encoding" value="cp437"/>
+    <property name="sun.desktop" value="windows"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+  </properties>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testACreation" time="1.528"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testBDuplicateCreation" time="0.312"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testCView" time="0.046"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testDViewByID" time="0.017"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testEViewAll" time="1.533"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testFGetSuperUser" time="0.031"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testGChangeUsername" time="0.149"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testHChangePassword" time="0.108"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testHDChangePasswordForNonexistentUser" time="0.032"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testIDeletion" time="0.062"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testJDuplicateDeletion" time="0.284"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testKCreateAccount" time="0.094"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testLCreateAccountWithNumbersAndUsername" time="0.101"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testMCreateAccountWithNegativeDeposit" time="0.045"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testNDeleteAccount" time="0.094"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testODeleteNonExistentAccount" time="0.016"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testPTransfer" time="0.307"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testQGetBalance" time="0.031"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testRGetMaxBalance" time="0.064"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testSGetUserByName" time="0.031"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testTgetAllBalances" time="0.048"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testUTransferWithInsufficientFunds" time="0.294"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testVDeposit" time="0.094"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testWWithdrawl" time="0.075"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testXWithdrawlWithInsufficientFunds" time="0.062"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testYGetMaxAccount" time="0.063"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testZGetSpecificAccount" time="0.031"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testaSendMoney" time="1.367"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testbGetTransactionByAccount" time="0.187"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testbGetTransactionByID" time="0.055"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testbGetTransactionByUser" time="0.203"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="testbGetallTransactions" time="0.241"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="ztestFrontEnd" time="1.289"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="zztestFrontEnd" time="1.276"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="zzztestFrontEnd" time="1.423"/>
+  <testcase classname="com.revature.eval.bank.BankTest" name="zzzztestFrontEnd" time="0.666"/>
+</testsuite>

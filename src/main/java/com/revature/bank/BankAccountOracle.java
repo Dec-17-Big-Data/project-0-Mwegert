@@ -36,8 +36,8 @@ public class BankAccountOracle implements BankAccountDao{
 			return Optional.empty();
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call getAccount(?,?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call getAccount(?,?,?,?)");){
+			
 			//(account_ID_OUTPUT out number, name_INPUT varchar2, balance_OUTPUT out binary_float, user_id_INPUT number)
 			cb.setString(2, accountName);
 			cb.setInt(4, userID);
@@ -45,13 +45,13 @@ public class BankAccountOracle implements BankAccountDao{
 			cb.registerOutParameter(3, java.sql.Types.FLOAT);
 			cb.execute();
 			
+			if (cb.getInt(1) < 1) throw new SQLException("nonexistent account");
 			log.traceExit("Successfully fetched BankAccount object");
 			// id, name, balance, userid
 			DecimalFormat df = new DecimalFormat("#########.##");
 			return Optional.of(new BankAccount(cb.getInt(1), accountName, Double.parseDouble(
 					df.format(cb.getDouble(3))), userID));
 		} catch (SQLException e) {
-			System.out.println("Action cannot be completed due to a database error. Please try again.");
 			log.traceExit(e);
 		}
 
@@ -68,8 +68,8 @@ public class BankAccountOracle implements BankAccountDao{
 			return;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call withdrawOrDeposit(?,?)");
+		try (CallableStatement cb = con.prepareCall("call withdrawOrDeposit(?,?)");){
+			
 			// (account_id_INPUT number, amount_INPUT binary_float
 			cb.setInt(1, accountID);
 			cb.setDouble(2, fixedAmount);
@@ -94,8 +94,8 @@ public class BankAccountOracle implements BankAccountDao{
 			return false;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call withdrawOrDeposit(?,?)");
+		try (CallableStatement cb = con.prepareCall("call withdrawOrDeposit(?,?)");){
+			
 			// (account_id_INPUT number, amount_INPUT binary_float
 			cb.setInt(1, accountID);
 			cb.setDouble(2, fixedAmount);
@@ -158,8 +158,8 @@ public class BankAccountOracle implements BankAccountDao{
 			return false;
 		}
 
-		try {
-			CallableStatement cb = con.prepareCall("call transferFundsBetweenAccounts(?,?,?,?)");
+		try (CallableStatement cb = con.prepareCall("call transferFundsBetweenAccounts(?,?,?,?)");){
+			
 			
 			cb.setInt(1, accountOneID);
 			cb.setInt(2, accountTwoID);

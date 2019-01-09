@@ -87,8 +87,8 @@ public class Transaction implements Serializable{
 	public String toString() {
 		DateTimeFormatter dt = DateTimeFormatter.ofPattern("MM/dd/yy HH:mm:ss");
 		DecimalFormat df = new DecimalFormat("#########.##");
-		return "\nTransaction [transactionID=" + transactionID + ", amount=" + df.format(amount) + ", transactionDate="
-				+ transactionDate.format(dt) + ", accountID=" + accountID + "]";
+		return "\nTransaction [transactionID= " + transactionID + ", amount= " + df.format(amount) + ", transactionDate= "
+				+ transactionDate.format(dt) + ", accountID= " + accountID + "]";
 	}
 	
 	

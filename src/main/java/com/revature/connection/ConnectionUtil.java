@@ -36,6 +36,7 @@ public class ConnectionUtil { //singleton
 			String password = props.getProperty("jdbc.password");
 
 			con = DriverManager.getConnection(endpoint, username, password);
+			connectionInstance = con;
 			log.trace("Connection established");
 			return con;
 		}

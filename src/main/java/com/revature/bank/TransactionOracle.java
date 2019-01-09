@@ -145,6 +145,7 @@ public class TransactionOracle implements TransactionDao {
 			ResultSet rs = (ResultSet) cb.getObject(2);
 			
 			log.traceExit("Returned transaction successfully");
+			rs.next();
 			Optional<Transaction> returnMe = Optional.of(new Transaction(transactionID, rs.getDouble(1), 
 					rs.getTimestamp(2).toLocalDateTime(), rs.getInt(3)));
 			rs.close();

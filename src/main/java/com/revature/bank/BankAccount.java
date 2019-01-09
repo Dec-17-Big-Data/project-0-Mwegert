@@ -1,6 +1,7 @@
 package com.revature.bank;
 
 import java.io.Serializable;
+import java.text.DecimalFormat;
 
 public class BankAccount implements Serializable{
 
@@ -96,7 +97,8 @@ public class BankAccount implements Serializable{
 
 	@Override
 	public String toString() {
-		return "BankAccount [accountID=" + accountID + ", accountName=" + accountName + ", balance=$" + balance
+		DecimalFormat df = new DecimalFormat("#########.##");
+		return "BankAccount [accountID=" + accountID + ", accountName=" + accountName + ", balance=$" + df.format(balance)
 				+ ", userID=" + userID + "]";
 	}
 	

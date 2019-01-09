@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BankAccountOracle.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JBDCBank</a> &gt; <a href="index.source.html" class="el_package">com.revature.bank</a> &gt; <span class="el_source">BankAccountOracle.java</span></div><h1>BankAccountOracle.java</h1><pre class="source lang-java linenums">package com.revature.bank;
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.revature.connection.ConnectionUtil;
+
+import oracle.jdbc.OracleTypes;
+
+public class BankAccountOracle implements BankAccountDao{
+<span class="fc" id="L18">	private static final Logger log = LogManager.getLogger(ConnectionUtil.class);</span>
+<span class="fc" id="L19">	private static BankAccountOracle bankAccountOracle;</span>
+	
+<span class="fc" id="L21">	private BankAccountOracle() {}</span>
+	
+	public static BankAccountDao getDao() {
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">		if (bankAccountOracle == null){</span>
+<span class="fc" id="L25">			bankAccountOracle = new BankAccountOracle();</span>
+		}
+<span class="fc" id="L27">		return bankAccountOracle;</span>
+	}
+
+	@Override
+	public Optional&lt;BankAccount&gt; getAccount(int userID, String accountName) {
+<span class="fc" id="L32">		log.traceEntry();</span>
+<span class="fc" id="L33">		Connection con = ConnectionUtil.getConnection();</span>
+
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L36">			return Optional.empty();</span>
+		}
+
+<span class="fc" id="L39">		try (CallableStatement cb = con.prepareCall(&quot;call getAccount(?,?,?,?)&quot;);){</span>
+			
+			//(account_ID_OUTPUT out number, name_INPUT varchar2, balance_OUTPUT out binary_float, user_id_INPUT number)
+<span class="fc" id="L42">			cb.setString(2, accountName);</span>
+<span class="fc" id="L43">			cb.setInt(4, userID);</span>
+<span class="fc" id="L44">			cb.registerOutParameter(1, java.sql.Types.NUMERIC);</span>
+<span class="fc" id="L45">			cb.registerOutParameter(3, java.sql.Types.FLOAT);</span>
+<span class="fc" id="L46">			cb.execute();</span>
+			
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">			if (cb.getInt(1) &lt; 1) throw new SQLException(&quot;nonexistent account&quot;);</span>
+<span class="fc" id="L49">			log.traceExit(&quot;Successfully fetched BankAccount object&quot;);</span>
+			// id, name, balance, userid
+<span class="fc" id="L51">			DecimalFormat df = new DecimalFormat(&quot;#########.##&quot;);</span>
+<span class="pc" id="L52">			return Optional.of(new BankAccount(cb.getInt(1), accountName, Double.parseDouble(</span>
+<span class="fc" id="L53">					df.format(cb.getDouble(3))), userID));</span>
+<span class="pc bpc" id="L54" title="7 of 8 branches missed.">		} catch (SQLException e) {</span>
+<span class="nc" id="L55">			log.traceExit(e);</span>
+		}
+
+<span class="nc" id="L58">		return Optional.empty();</span>
+	}
+
+	@Override
+	public void deposit(int accountID, double amount) {
+<span class="fc" id="L63">		log.traceEntry();</span>
+<span class="fc" id="L64">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L65">		double fixedAmount = Math.abs(amount); // always deposit a positive amount</span>
+		
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L68">			return;</span>
+		}
+
+<span class="fc" id="L71">		try (CallableStatement cb = con.prepareCall(&quot;call withdrawOrDeposit(?,?)&quot;);){</span>
+			
+			// (account_id_INPUT number, amount_INPUT binary_float
+<span class="fc" id="L74">			cb.setInt(1, accountID);</span>
+<span class="fc" id="L75">			cb.setDouble(2, fixedAmount);</span>
+<span class="fc" id="L76">			cb.execute();</span>
+			
+<span class="fc" id="L78">			log.traceExit(&quot;Successfully deposited &quot; + fixedAmount + &quot; into &quot; + accountID);</span>
+<span class="pc" id="L79">			return;</span>
+<span class="pc bpc" id="L80" title="7 of 8 branches missed.">		} catch (SQLException e) {</span>
+<span class="nc" id="L81">			System.out.println(&quot;Action cannot be completed due to a database error. Please try again.&quot;);</span>
+<span class="nc" id="L82">			log.traceExit(e);</span>
+		}
+<span class="nc" id="L84">		return;</span>
+	}
+
+	@Override
+	public boolean withdraw(int accountID, double amount) {
+<span class="fc" id="L89">		log.traceEntry();</span>
+<span class="fc" id="L90">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L91">		double fixedAmount = -Math.abs(amount); // always withdraw a negative amount</span>
+
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L94">			return false;</span>
+		}
+
+<span class="fc" id="L97">		try (CallableStatement cb = con.prepareCall(&quot;call withdrawOrDeposit(?,?)&quot;);){</span>
+			
+			// (account_id_INPUT number, amount_INPUT binary_float
+<span class="fc" id="L100">			cb.setInt(1, accountID);</span>
+<span class="fc" id="L101">			cb.setDouble(2, fixedAmount);</span>
+<span class="fc" id="L102">			cb.execute();</span>
+			
+<span class="fc" id="L104">			System.out.println(&quot;Successfully withdrew $&quot; + -fixedAmount);</span>
+<span class="fc" id="L105">			log.traceExit(&quot;Successfully withdrew &quot; + -fixedAmount + &quot; from &quot; + accountID);</span>
+<span class="fc" id="L106">			return true;</span>
+<span class="pc bpc" id="L107" title="4 of 8 branches missed.">		} catch (SQLException e) {</span>
+<span class="fc" id="L108">			System.out.println(&quot;Insufficient funds. Action aborted.&quot;);</span>
+<span class="fc" id="L109">			log.traceExit(e);</span>
+		}
+
+<span class="fc" id="L112">		return false;</span>
+	}
+
+	@Override
+	public Optional&lt;BankAccount&gt; getAccount(int userID) {
+<span class="fc" id="L117">		log.traceEntry();</span>
+<span class="fc" id="L118">		Connection con = ConnectionUtil.getConnection();</span>
+		
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L121">			return Optional.empty();</span>
+		}
+		try{
+<span class="fc" id="L124">			CallableStatement cb = con.prepareCall(&quot;call getMaxAccountCursor(?,?)&quot;);</span>
+			//getMaxAccount(account_ID_OUTPUT out number, name_OUTPUT out varchar2, 
+			// balance_OUTPUT out binary_float, user_id_INPUT number)
+<span class="fc" id="L127">			cb.setInt(1, userID);</span>
+<span class="fc" id="L128">			cb.registerOutParameter(2, OracleTypes.CURSOR);</span>
+<span class="fc" id="L129">			cb.execute();</span>
+<span class="fc" id="L130">			ResultSet rs = (ResultSet) cb.getObject(2);</span>
+<span class="fc" id="L131">			rs.next();</span>
+
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">			if (rs.getString(2) == null) { </span>
+<span class="nc" id="L134">				log.traceExit(&quot;Account not found in db&quot;);</span>
+<span class="nc" id="L135">				cb.close();</span>
+<span class="nc" id="L136">				rs.close();</span>
+<span class="nc" id="L137">				return Optional.empty();</span>
+			}
+<span class="fc" id="L139">			log.traceExit(&quot;Successfully returned BankAccount&quot;);</span>
+			// (int accountID, String accountName, double balance, int userID)
+<span class="fc" id="L141">			BankAccount ba = new BankAccount(rs.getInt(1), rs.getString(2), rs.getDouble(3), userID);</span>
+<span class="fc" id="L142">			rs.close();</span>
+<span class="fc" id="L143">			cb.close();</span>
+<span class="fc" id="L144">			return Optional.of(ba);</span>
+<span class="nc" id="L145">		} catch (SQLException e) {</span>
+<span class="nc" id="L146">			log.traceExit(e);</span>
+<span class="nc" id="L147">			return Optional.empty();</span>
+		}
+	}
+
+	@Override
+	public boolean sendMoney(int accountOneID, int accountTwoID, double amount) {
+<span class="fc" id="L153">		log.traceEntry();</span>
+<span class="fc" id="L154">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L155">		double fixedAmount = Math.abs(amount); // send a positive amount</span>
+
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L158">			return false;</span>
+		}
+
+<span class="fc" id="L161">		try (CallableStatement cb = con.prepareCall(&quot;call transferFundsBetweenAccounts(?,?,?,?)&quot;);){</span>
+			
+			
+<span class="fc" id="L164">			cb.setInt(1, accountOneID);</span>
+<span class="fc" id="L165">			cb.setInt(2, accountTwoID);</span>
+<span class="fc" id="L166">			cb.setDouble(3, amount);</span>
+<span class="fc" id="L167">			cb.registerOutParameter(4, java.sql.Types.NUMERIC);</span>
+<span class="fc" id="L168">			cb.execute(); </span>
+			
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">			if (cb.getInt(4) == 0) {</span>
+<span class="nc" id="L171">				return false;</span>
+			}
+<span class="fc" id="L173">			log.traceExit(&quot;Successfully sent &quot; + fixedAmount + &quot; from &quot; + accountOneID + &quot; to &quot; + accountTwoID);</span>
+<span class="pc" id="L174">			return true;</span>
+<span class="pc bpc" id="L175" title="9 of 10 branches missed.">		} catch (SQLException e) {</span>
+<span class="nc" id="L176">			System.out.println(&quot;Action cannot be completed due to a database error. Please try again.&quot;);</span>
+<span class="nc" id="L177">			log.traceExit(e);</span>
+		}
+
+<span class="nc" id="L180">		return false;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

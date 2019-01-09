@@ -19,7 +19,8 @@ public class BankMain {
 				Speaker speaker = Speaker.getSpeaker();
 				speaker.start(scanner);
 			} catch(CancelException e) {
-				System.out.println("Logged out. Goodbye.\n");
+				System.out.println("Goodbye.\n");
+				break;
 			}
 		}
 	}

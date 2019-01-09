@@ -20,7 +20,7 @@ import com.revature.services.UserService;
 
 // Mason Wegert
 // 12/31/18
-// This abstract class is used to decipher user input
+// This class is used to decipher user input
 // based on a set of booleans that determine state.
 
 public class Speaker { // change to singleton
@@ -62,90 +62,96 @@ public class Speaker { // change to singleton
 			System.out.println("Unable to create new SuperUser - file not found.");
 			log.trace("SuperUser creation file not found.");
 		}
-		
-		// log in or register:
-		entry(scanner);
-		// user should be logged in now
-		while(currentUser.isLoggedIn()) {
-			try {
-				performAction(scanner);
-			} catch (CancelException e) {
-				log.traceExit(e.getMessage());
-				reset();
-				throw e;
+		while(true) {
+			// log in or register:
+			entry(scanner);
+			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+			if(currentUser.isSuperUser()) System.out.println("Successfully logged in as superuser " + currentUser.getUsername() + ".");
+			else System.out.println("Successfully logged in as " + currentUser.getUsername() + ".");
+
+			// user should be logged in now
+			while(currentUser.isLoggedIn()) {
+				try {
+					performAction(scanner);
+				} catch (CancelException e) {
+					log.traceExit(e.getMessage());
+					reset();
+					break;
+				}
 			}
 		}
 	}
 
 	private void performAction(Scanner scanner) throws CancelException{
-		while(currentUser.isLoggedIn()) {
-			System.out.println("> Enter a command or type 'help' for more info.\n");
-			String input = scanner.nextLine().trim();
-			try {
-				input = decipher(input);
 
-				if(currentUser.isSuperUser()) { // superuser commands
-					switch(input) {
-					case "createuser": createUser(scanner);
+		System.out.println("\n> Enter a command or type 'help' for more info.\n");
+		String input = scanner.nextLine().trim();
+		try {
+			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+			input = decipher(input);
+
+			if(currentUser.isSuperUser()) { // superuser commands
+				switch(input) {
+				case "createuser": createUser(scanner);
+				break;
+				case "viewusers": viewUsers(scanner);
+				break;
+				case "viewuser": viewUser(scanner);
+				break;
+				case "edituser": editUser(scanner);
+				break;
+				case "deleteuser": deleteUser(scanner);
+				break;
+				case "help":
+					System.out.println("The following are valid commands:"
+							+ "'create user', 'view users'/'view all', "
+							+ "'view user'/'view one', 'edit user', 'delete user'\n");
 					break;
-					case "viewusers": viewUsers(scanner);
-					break;
-					case "viewuser": viewUser(scanner);
-					break;
-					case "edituser": editUser(scanner);
-					break;
-					case "deleteuser": deleteUser(scanner);
-					break;
-					case "help":
-						System.out.println("The following are valid commands:"
-								+ "'create user', 'view users'/'view all', "
-								+ "'view user'/'view one', 'edit user', 'delete user'\n");
-						break;
-					case "logout": 
+				case "logout": 
 					log.traceExit("Superuser logged out");
 					throw new CancelException("Superuser logged out.");
-					default: log.traceExit("Should never reach this point.");
-					break;
-					}
+				default: log.traceExit("Should never reach this point.");
+				break;
 				}
-
-				else { // normal user commands
-					switch(input) {
-					case "getbalances": getBalances(scanner);
-					break;
-					case "getbalance": getBalance(scanner);
-					break;
-					case "createaccount": createAccount(scanner);
-					break;
-					case "deleteaccount": deleteAccount(scanner);
-					break;
-					case "transfer": transferMoney(scanner);
-					break;
-					case "deposit": deposit(scanner);
-					break;
-					case "withdraw": withdraw(scanner);
-					break;
-					case "viewhistory": viewHistory(scanner);
-					break;
-					case "sendmoney": sendMoney(scanner);
-					break;
-					case "help":
-						System.out.println("The following are valid commands: "
-								+ "'view all balances'/'view all', 'view one balance'/'view one',"
-								+ " 'create account', 'delete account', 'transfer', 'deposit',"
-								+ " 'withdraw', 'view history', 'send money'\n");
-						break;
-					case "logout": 
-						log.traceExit("user logged out");
-						throw new CancelException("User logged out.");
-					default: log.traceExit("Should never reach this point.");
-					break;
-					}
-				}
-			} catch (InvalidInputException e) {
-				System.out.println("Invalid input. Please try again.");
 			}
+
+			else { // normal user commands
+				switch(input) {
+				case "getbalances": getBalances(scanner);
+				break;
+				case "getbalance": getBalance(scanner);
+				break;
+				case "createaccount": createAccount(scanner);
+				break;
+				case "deleteaccount": deleteAccount(scanner);
+				break;
+				case "transfer": transferMoney(scanner);
+				break;
+				case "deposit": deposit(scanner);
+				break;
+				case "withdraw": withdraw(scanner);
+				break;
+				case "viewhistory": viewHistory(scanner);
+				break;
+				case "sendmoney": sendMoney(scanner);
+				break;
+				case "help":
+					System.out.println("The following are valid commands: "
+							+ "'view all balances'/'view all', 'view one balance'/'view one',"
+							+ " 'create account', 'delete account', 'transfer', 'deposit',"
+							+ " 'withdraw', 'view history', 'send money'\n");
+					break;
+				case "logout": 
+					log.traceExit("user logged out");
+					throw new CancelException("User logged out.");
+				default: log.traceExit("Should never reach this point.");
+				break;
+				}
+			}
+		} catch (InvalidInputException e) {
+			System.out.println("Invalid input. Please try again.");
 		}
+
 	}
 
 	private void sendMoney(Scanner scanner) {
@@ -213,8 +219,8 @@ public class Speaker { // change to singleton
 				throw new CancelException("Unknown error.");// shouldnt happen, failsafe
 			}
 
-			log.traceExit("Successfully transferred " + transferAmount + " to " + input);
-			System.out.println("Successfully transferred " + transferAmount + " to " + input);
+			log.traceExit("Successfully transferred $" + transferAmount + " to " + input);
+			System.out.println("Successfully transferred $" + transferAmount + " to " + input);
 		} catch (CancelException e) {
 			System.out.println("Cancelled action.\n");
 			log.traceExit(e);
@@ -306,7 +312,7 @@ public class Speaker { // change to singleton
 
 			while(true) {
 				try {
-					System.out.println("How much would you like to withdraw from " + input + "?");
+					System.out.println("How much would you like to withdraw from " + userAccount.getAccountName() + "?");
 					input = scanner.nextLine();
 					if (input.charAt(0) == '$') input = input.substring(1);
 					withdrawlAmount = Double.parseDouble(input);
@@ -317,7 +323,7 @@ public class Speaker { // change to singleton
 					bankAccountService.withdraw(userAccount.getAccountID(), withdrawlAmount);
 					log.traceExit("User withdrew " + -withdrawlAmount + " from " + userAccount.getAccountName());
 					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-					System.out.println("Here is your money. Your remaining balance is " + 
+					System.out.println("Here is your money. Your remaining balance is $" + 
 							(userAccount.getBalance() - withdrawlAmount));
 					System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
 					break;
@@ -415,7 +421,7 @@ public class Speaker { // change to singleton
 
 			while(true) {
 				try {
-					System.out.println("How much would you like to withdraw from " + input + "?");
+					System.out.println("How much would you like to withdraw from " + firstAccount.getAccountName() + "?");
 					input = scanner.nextLine();
 					if (input.charAt(0) == '$') input = input.substring(1);
 					transferAmount = Double.parseDouble(input);
@@ -537,15 +543,19 @@ public class Speaker { // change to singleton
 
 			System.out.println("Please enter an initial deposit (optional)");
 			try {
-				initialDeposit = Double.parseDouble(scanner.nextLine());
+				String temp = scanner.nextLine();
+				if (temp.charAt(0) == '$') {
+					temp = temp.substring(1);
+				}
+				initialDeposit = Double.parseDouble(temp);
 				initialDeposit = (initialDeposit < 0) ? 0 : initialDeposit;
 			} catch(NumberFormatException e) {
 				initialDeposit = 0;
 			}
-			
+
 			userService.createAccount(currentUser.getUserID(), initialDeposit, accountName);
 			log.traceExit("User successfully created an account: " + accountName);
-			System.out.println(accountName + " successfully created! Your balance is " + initialDeposit);
+			System.out.println(accountName + " successfully created! Your balance is $" + initialDeposit);
 
 		} catch(CancelException e) {
 			System.out.println("Cancelled action.\n");
@@ -553,7 +563,7 @@ public class Speaker { // change to singleton
 		}
 	}
 
-	
+
 	private void getBalance(Scanner scanner) {
 		log.traceEntry();
 		Map<String, Double> userBalances = null;
@@ -593,7 +603,7 @@ public class Speaker { // change to singleton
 		}
 	}
 
-	
+
 	private void getBalances(Scanner scanner) {
 		log.traceEntry();
 		try {
@@ -627,7 +637,7 @@ public class Speaker { // change to singleton
 		}	
 	}
 
-	
+
 	private void editUser(Scanner scanner) {
 		log.traceEntry();
 		String thisUsername = null;
@@ -635,7 +645,7 @@ public class Speaker { // change to singleton
 		Optional<User> userOpt = Optional.empty();
 		try {
 			do {
-				System.out.println("Enter the name of the user you would like to delete, or 'cancel'.");
+				System.out.println("Enter the name of the user you would like to edit, or 'cancel'.");
 				thisUsername = scanner.nextLine();
 				if ("cancel".equals(thisUsername)) throw new CancelException();
 
@@ -660,6 +670,7 @@ public class Speaker { // change to singleton
 						while (true) {
 							System.out.println("Enter a new username for this user.");
 							input = scanner.nextLine();
+							if ("cancel".equals(normalize(input))) break;
 							if (superUserService.changeUsername(thisUsername, input)) {
 								repeat = false; // entire method was a success
 								log.traceExit("Successfully changed a username");
@@ -674,6 +685,7 @@ public class Speaker { // change to singleton
 					case "word":
 						System.out.println("Enter a new password for this user.");
 						input = scanner.nextLine();
+						if ("cancel".equals(normalize(input))) break;
 						superUserService.changePassword(thisUsername, input);
 						repeat = false;
 						log.traceExit("Successfully changed a password");
@@ -692,7 +704,7 @@ public class Speaker { // change to singleton
 
 	}
 
-	
+
 	private void viewUser(Scanner scanner) {
 		log.traceEntry();
 		String input = "";
@@ -722,7 +734,7 @@ public class Speaker { // change to singleton
 
 	}
 
-	
+
 	private void viewUsers(Scanner scanner) {
 		log.traceEntry();
 		System.out.println("Here are all users in the database: ");
@@ -730,14 +742,14 @@ public class Speaker { // change to singleton
 		log.traceExit();
 	}
 
-	
+
 	private void createUser(Scanner scanner) {
 		log.traceEntry();
 		String username_in = "";
 		String password_in = "";
 		try {
 			while(true) {
-				System.out.println("Enter a usename for the new user: ");
+				System.out.println("Enter a username for the new user: ");
 				username_in = scanner.nextLine();
 				if ("cancel".equals(normalize(username_in))) throw new CancelException("cancelled @ username");
 				if (superUserService.viewUser(username_in).isPresent()) {
@@ -759,12 +771,12 @@ public class Speaker { // change to singleton
 
 	}
 
-	
+
 	private void entry(Scanner scanner) throws CancelException{
 		while (!currentUser.isLoggedIn()) {
 			System.out.println("Would you like to 'log in' as an existing user or 'register' as a new user?\n");
-			String input = scanner.nextLine().trim();
-			if ("cancel".equals(input)) {
+			String input = scanner.nextLine();
+			if ("cancel".equals(normalize(input))) {
 				throw new CancelException();
 			}
 			try {
@@ -785,7 +797,7 @@ public class Speaker { // change to singleton
 		}
 	}
 
-	
+
 	private void login(Scanner scanner) throws CancelException{
 		String username = "";
 		String password = "";
@@ -803,7 +815,7 @@ public class Speaker { // change to singleton
 			if ("cancel".equals(password)){
 				throw new CancelException();
 			}
-			
+
 			try {
 				if (superUserService.getSuperUser(username).isPresent()) { // this is a superuser
 					existingSuperUser = superUserService.getSuperUser(username).get();
@@ -813,7 +825,6 @@ public class Speaker { // change to singleton
 						currentUser.setUserID(existingSuperUser.getUserID());
 						currentUser.setSuperUser(true);
 						currentUser.setLoggedIn(true);
-						System.out.println("Successfully logged in as superuser " + username + ".");
 						log.traceExit();
 						break;
 					}
@@ -826,7 +837,6 @@ public class Speaker { // change to singleton
 						currentUser.setUserID(existingUser.getUserID());
 						currentUser.setSuperUser(false);
 						currentUser.setLoggedIn(true);
-						System.out.println("Successfully logged in as " + username + ".");
 						log.traceExit();
 						break;
 					}
@@ -843,37 +853,49 @@ public class Speaker { // change to singleton
 			} catch (NoSuchElementException e) {
 				System.out.println("Username does not exist in the database.");
 			} catch (PasswordException e) {
-				System.out.println("invalid Password");
+				System.out.println("Invalid password");
 			}
 		}
 	}
 
-	
-	private void register(Scanner scanner) {
+
+	private void register(Scanner scanner) throws CancelException{
 		String username = "";
 		String password = "";
 		User registeredUser = null;
 		while(!currentUser.isLoggedIn()) { // new user wants to register
 			System.out.println("Please enter a username.");
 			username = scanner.nextLine().trim();
+			if ("cancel".equals(normalize(username))) throw new CancelException();
 			System.out.println("Please enter a password.");
 			password = scanner.nextLine().trim();
+			if ("cancel".equals(normalize(password))) throw new CancelException();
 			try {
-				registeredUser = superUserService.createUser(username, password).get();
+				try {
+					superUserService.getSuperUser(username).get();
+					throw new CancelException(); // throw if it DOES exist
+				} catch (NoSuchElementException e) {
+				}
+
+				try {
+					registeredUser = superUserService.createUser(username, password).get();
+				} catch (NoSuchElementException e) {
+					throw new CancelException(); // throw if creation FAILS
+				}
 				currentUser.setUsername(username);
 				currentUser.setPassword(password);
 				currentUser.setSuperUser(false);
 				currentUser.setUserID(registeredUser.getUserID());
 				currentUser.setLoggedIn(true);
 				System.out.println("Successfully created account " + username + " You are now logged in.\n");
-			} catch (NoSuchElementException e) {
+			} catch (CancelException e) {
 				System.out.println("That username already exists in the database. Please enter a unique username.");
 				log.traceExit(e.getMessage());
 			}
 		}
 	}
 
-	
+
 	private String decipher(String gibberish) throws CancelException, InvalidInputException{
 		gibberish = normalize(gibberish); // no spaces, all lower case
 		if ("cancel".equals(gibberish)) throw new CancelException();
@@ -1021,16 +1043,15 @@ public class Speaker { // change to singleton
 		}
 	}
 
-	
-	private void reset() {
-		speaker = null;
-		currentUser = null;
-	}
-	
 
-	
+	private void reset() {
+		this.currentUser = new CurrentUser();
+	}
+
+
+
 	private String normalize(String s) { // used to fix user input
-		return s.replaceAll(" ","").toLowerCase();
+		return s.replaceAll("\\s","").toLowerCase(); 
 	}
 
 }

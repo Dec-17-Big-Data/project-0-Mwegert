@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SuperUserOracle.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JBDCBank</a> &gt; <a href="index.source.html" class="el_package">com.revature.bank</a> &gt; <span class="el_source">SuperUserOracle.java</span></div><h1>SuperUserOracle.java</h1><pre class="source lang-java linenums">package com.revature.bank;
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.revature.connection.ConnectionUtil;
+
+public class SuperUserOracle implements SuperUserDao{
+	private static SuperUserOracle superUserOracle;
+<span class="fc" id="L19">	private static final Logger log = LogManager.getLogger(ConnectionUtil.class);</span>
+	
+<span class="fc" id="L21">	private SuperUserOracle() {}</span>
+
+	public static SuperUserDao getDao() {
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">		if (superUserOracle == null) {</span>
+<span class="fc" id="L25">			superUserOracle = new SuperUserOracle();</span>
+		}
+<span class="fc" id="L27">		return superUserOracle;</span>
+	}
+
+	@Override
+	public Optional&lt;User&gt; createUser(String username, String password) {
+<span class="fc" id="L32">		log.traceEntry();</span>
+<span class="fc" id="L33">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L34">		int userID = 0;</span>
+		
+<span class="fc bfc" id="L36" title="All 2 branches covered.">		if (con == null) {</span>
+<span class="fc" id="L37">			return Optional.empty();</span>
+		}
+		
+		try {
+<span class="fc" id="L41">			CallableStatement cb = con.prepareCall(&quot;call addUser(?, ?, ?)&quot;);</span>
+<span class="fc" id="L42">			cb.setString(1, username);</span>
+<span class="fc" id="L43">			cb.setString(2,password);</span>
+<span class="fc" id="L44">			cb.registerOutParameter(3, java.sql.Types.NUMERIC);</span>
+<span class="fc" id="L45">			cb.execute();</span>
+<span class="fc" id="L46">			userID = cb.getInt(3);</span>
+			
+<span class="fc" id="L48">			log.traceExit(&quot;Successfully inserted &quot; + username + &quot; into Users&quot;);</span>
+<span class="fc" id="L49">			return Optional.of(new User(username, password, userID));</span>
+			
+<span class="fc" id="L51">		} catch (SQLException e) {</span>
+<span class="fc" id="L52">			log.traceExit(e.getMessage());</span>
+		}
+<span class="fc" id="L54">		log.traceExit(&quot;Failed to add new user due to duplicate username or SQL exception&quot;);</span>
+<span class="fc" id="L55">		return Optional.empty();</span>
+	}
+
+	@Override
+	public Optional&lt;List&lt;User&gt;&gt; viewUsers() {
+<span class="fc" id="L60">		log.traceEntry();</span>
+<span class="fc" id="L61">		Connection con = ConnectionUtil.getConnection();</span>
+
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L64">			return Optional.empty();</span>
+		}
+
+		try {
+<span class="fc" id="L68">			String sql = &quot;select username, password, user_id from users&quot;;</span>
+<span class="fc" id="L69">			PreparedStatement ps = con.prepareStatement(sql);</span>
+<span class="fc" id="L70">			ResultSet rs = ps.executeQuery();</span>
+			
+<span class="fc" id="L72">			List&lt;User&gt; allUsers = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L74" title="All 2 branches covered.">			while(rs.next()) {</span>
+<span class="fc" id="L75">				CallableStatement cb = con.prepareCall(&quot;call getUserAccountInfo(?, ?, ?)&quot;);</span>
+<span class="fc" id="L76">				cb.setInt(1, rs.getInt(&quot;user_id&quot;));</span>
+<span class="fc" id="L77">				cb.registerOutParameter(2, java.sql.Types.NUMERIC);</span>
+<span class="fc" id="L78">				cb.registerOutParameter(3, java.sql.Types.FLOAT);</span>
+<span class="fc" id="L79">				cb.execute();</span>
+				
+<span class="fc" id="L81">				allUsers.add(new User(rs.getString(&quot;username&quot;), rs.getString(&quot;password&quot;), rs.getInt(&quot;user_id&quot;), </span>
+<span class="fc" id="L82">						cb.getInt(2), cb.getDouble(3)));</span>
+			}
+			
+<span class="fc" id="L85">			rs.close();</span>
+<span class="fc" id="L86">			ps.close();</span>
+<span class="fc" id="L87">			log.traceExit(&quot;Returned array size: &quot; + allUsers.size());</span>
+			
+<span class="fc" id="L89">			return Optional.of(allUsers);</span>
+<span class="nc" id="L90">		} catch (SQLException e) {</span>
+<span class="nc" id="L91">			log.traceExit(e.getMessage());</span>
+<span class="nc" id="L92">			System.out.println(&quot;Action cannot be completed due to a database error. Please try again.&quot;);</span>
+		}
+<span class="nc" id="L94">		log.traceExit(&quot;viewUsers returned empty&quot;);</span>
+<span class="nc" id="L95">		return Optional.empty();</span>
+	}
+
+	@Override
+	public boolean changeUsername(String username, String newUsername) {
+<span class="fc" id="L100">		log.traceEntry();</span>
+<span class="fc" id="L101">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L102">		int succeeded = 0;</span>
+		
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L105">			return false;</span>
+		}
+		try {
+<span class="fc" id="L108">		CallableStatement cb = con.prepareCall(&quot;call updateusername(?, ?, ?)&quot;);</span>
+<span class="fc" id="L109">		cb.setString(1, username);</span>
+<span class="fc" id="L110">		cb.setString(2, newUsername);</span>
+<span class="fc" id="L111">		cb.registerOutParameter(3, java.sql.Types.NUMERIC);	</span>
+		
+<span class="fc" id="L113">		cb.execute();</span>
+<span class="fc" id="L114">		succeeded = cb.getInt(3);</span>
+		
+<span class="fc bfc" id="L116" title="All 2 branches covered.">		if (succeeded == 1) {</span>
+<span class="fc" id="L117">			System.out.println(&quot;Successfully updated &quot; + username + &quot; to &quot; + newUsername + &quot;\n&quot;);</span>
+<span class="fc" id="L118">			log.traceExit(&quot;Successfully updated &quot; + username + &quot; to &quot; + newUsername);</span>
+<span class="fc" id="L119">			cb.close();</span>
+<span class="fc" id="L120">			return true;</span>
+		}
+		
+<span class="fc" id="L123">		System.out.println(&quot;That username was not found. Check your spelling and try again.&quot;);</span>
+<span class="fc" id="L124">		log.traceExit(&quot;Successfully executed procedure. Nothing updated.&quot;);</span>
+<span class="fc" id="L125">		cb.close();</span>
+<span class="fc" id="L126">		return false;</span>
+<span class="nc" id="L127">		} catch(SQLException e) {</span>
+<span class="nc" id="L128">			log.traceExit(e.getMessage());</span>
+		}
+		
+<span class="nc" id="L131">		log.traceExit(&quot;SQL Exception when trying to update a username.&quot;);</span>
+		
+<span class="nc" id="L133">		return false;</span>
+	}
+
+	@Override
+	public boolean changePassword(String username, String newPassword) {
+<span class="fc" id="L138">		log.traceEntry();</span>
+<span class="fc" id="L139">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L140">		int succeeded = 0;</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L142">			return false;</span>
+		}
+		
+		try {
+<span class="fc" id="L146">			CallableStatement cb = con.prepareCall(&quot;call updatepassword(?,?,?)&quot;);</span>
+<span class="fc" id="L147">			cb.setString(1, username);</span>
+<span class="fc" id="L148">			cb.setString(2, newPassword);</span>
+<span class="fc" id="L149">			cb.registerOutParameter(3, java.sql.Types.NUMERIC);</span>
+			
+<span class="fc" id="L151">			cb.execute();</span>
+<span class="fc" id="L152">			succeeded = cb.getInt(3);</span>
+			
+<span class="fc bfc" id="L154" title="All 2 branches covered.">			if (succeeded == 1) {</span>
+<span class="fc" id="L155">				System.out.println(&quot;Successfully updated &quot; + username + &quot;'s password to &quot; + newPassword);</span>
+<span class="fc" id="L156">				log.traceExit(&quot;Successfully updated &quot; + username + &quot;'s password to &quot; + newPassword);</span>
+<span class="fc" id="L157">				cb.close();</span>
+<span class="fc" id="L158">				return true;</span>
+			}
+			
+<span class="fc" id="L161">			System.out.println(&quot;That username was not found. Check your spelling and try again.&quot;);</span>
+<span class="fc" id="L162">			log.traceExit(&quot;Successfully executed procedure. Nothing updated.&quot;);</span>
+<span class="fc" id="L163">			cb.close();</span>
+<span class="fc" id="L164">			return false;</span>
+<span class="nc" id="L165">		} catch (SQLException e) {</span>
+<span class="nc" id="L166">			log.traceExit(e.getMessage());</span>
+<span class="nc" id="L167">			System.out.println(&quot;Action cannot be completed due to a database error. Please try again&quot;);</span>
+		}
+		
+<span class="nc" id="L170">		log.traceExit(&quot;SQL Exception when trying to update a password.&quot;);</span>
+<span class="nc" id="L171">		return false;</span>
+	}
+
+	@Override
+	public boolean deleteUser(String username) {
+<span class="fc" id="L176">		log.traceEntry();</span>
+<span class="fc" id="L177">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L178">		int succeeded = 0;</span>
+		
+<span class="fc bfc" id="L180" title="All 2 branches covered.">		if (con == null) {</span>
+<span class="fc" id="L181">			return false;</span>
+		}
+		
+		try {
+<span class="fc" id="L185">			CallableStatement cb = con.prepareCall(&quot;call deleteUser(?, ?)&quot;);</span>
+<span class="fc" id="L186">			cb.setString(1, username);</span>
+<span class="fc" id="L187">			cb.registerOutParameter(2, java.sql.Types.NUMERIC);</span>
+<span class="fc" id="L188">			cb.execute();</span>
+			
+<span class="fc" id="L190">			succeeded = cb.getInt(2);</span>
+			
+<span class="fc bfc" id="L192" title="All 2 branches covered.">			if (succeeded == 1) {</span>
+<span class="fc" id="L193">				System.out.println(&quot;Successfully deleted &quot; + username + &quot; from users&quot;);</span>
+<span class="fc" id="L194">				log.traceExit(&quot;Successfully deleted &quot; + username + &quot; from users&quot;);</span>
+<span class="fc" id="L195">				cb.close();</span>
+<span class="fc" id="L196">				return true;</span>
+			}
+<span class="fc" id="L198">			System.out.println(&quot;That username was not found. Check your spelling and try again.&quot;);</span>
+<span class="fc" id="L199">			log.traceExit(&quot;Successfully executed procedure. Nothing deleted.&quot;);</span>
+<span class="fc" id="L200">			cb.close();</span>
+<span class="pc" id="L201">		} catch (SQLException e) {</span>
+<span class="nc" id="L202">			log.traceExit(e.getMessage());</span>
+<span class="nc" id="L203">			System.out.println(&quot;Action cannot be completed due to a database error. Please try again.&quot;);</span>
+		}
+		
+<span class="fc" id="L206">		log.traceExit(&quot;Failed to delete user.&quot;);</span>
+<span class="fc" id="L207">		return false;</span>
+	}
+
+	@Override
+	public Optional&lt;User&gt; viewUser(String username) {
+<span class="fc" id="L212">		log.traceEntry();</span>
+<span class="fc" id="L213">		Connection con = ConnectionUtil.getConnection();</span>
+		
+<span class="pc bpc" id="L215" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L216">			return Optional.empty();</span>
+		}
+		try{
+<span class="fc" id="L219">			CallableStatement cb = con.prepareCall(&quot;call getUserInfo(?, ?, ?, ?, ?)&quot;);</span>
+<span class="fc" id="L220">			cb.setString(1, username);</span>
+<span class="fc" id="L221">			cb.registerOutParameter(2, java.sql.Types.VARCHAR); // password</span>
+<span class="fc" id="L222">			cb.registerOutParameter(3, java.sql.Types.NUMERIC); // userid</span>
+<span class="fc" id="L223">			cb.registerOutParameter(4, java.sql.Types.NUMERIC); // numaccounts</span>
+<span class="fc" id="L224">			cb.registerOutParameter(5, java.sql.Types.FLOAT); // totalbalance</span>
+<span class="fc" id="L225">			cb.execute();</span>
+			
+<span class="fc bfc" id="L227" title="All 2 branches covered.">			if (cb.getString(2) == null) {</span>
+<span class="fc" id="L228">				cb.close();</span>
+<span class="fc" id="L229">				throw new SQLException(&quot;Username does not exist in database.&quot;);</span>
+			}
+<span class="fc" id="L231">			return Optional.of(new User(username, cb.getString(2), cb.getInt(3), cb.getInt(4), cb.getDouble(5)));</span>
+<span class="fc" id="L232">		} catch (SQLException e) {</span>
+<span class="fc" id="L233">			log.traceExit(e.getMessage());</span>
+		}
+		
+<span class="fc" id="L236">		log.traceExit(&quot;SQL Exception when trying to view a user&quot;);</span>
+<span class="fc" id="L237">		return Optional.empty();</span>
+	}
+
+	@Override
+	public Optional&lt;User&gt; viewUser(Integer userid) {
+<span class="fc" id="L242">		log.traceEntry();</span>
+<span class="fc" id="L243">		Connection con = ConnectionUtil.getConnection();</span>
+		
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">		if (con == null) {</span>
+<span class="nc" id="L246">			return Optional.empty();</span>
+		}
+		try{
+<span class="fc" id="L249">			CallableStatement sb = con.prepareCall(&quot;call getUserInfoByID(?, ?, ?, ?, ?)&quot;);</span>
+<span class="fc" id="L250">			sb.setInt(1, userid);</span>
+<span class="fc" id="L251">			sb.registerOutParameter(2, java.sql.Types.VARCHAR); // username</span>
+<span class="fc" id="L252">			sb.registerOutParameter(3, java.sql.Types.VARCHAR); // password</span>
+<span class="fc" id="L253">			sb.registerOutParameter(4, java.sql.Types.NUMERIC); // numaccounts</span>
+<span class="fc" id="L254">			sb.registerOutParameter(5, java.sql.Types.FLOAT); // totalbalance</span>
+<span class="fc" id="L255">			sb.execute();</span>
+			
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">			if (sb.getString(2) == null) {</span>
+<span class="nc" id="L258">				throw new SQLException(&quot;UserID does not exist in database.&quot;);</span>
+			}
+<span class="fc" id="L260">			return Optional.of(new User(sb.getString(2), sb.getString(3), userid, sb.getInt(4), sb.getDouble(5)));</span>
+<span class="nc" id="L261">		} catch (SQLException e) {</span>
+<span class="nc" id="L262">			log.traceExit(e.getMessage());</span>
+		}
+		
+<span class="nc" id="L265">		log.traceExit(&quot;SQL Exception when trying to view a user&quot;);</span>
+<span class="nc" id="L266">		return Optional.empty();</span>
+	}
+
+	@Override
+	public Optional&lt;SuperUser&gt; getSuperUser(String username) {
+<span class="fc" id="L271">		log.traceEntry();</span>
+<span class="fc" id="L272">		Connection con = ConnectionUtil.getConnection();</span>
+		
+<span class="fc bfc" id="L274" title="All 2 branches covered.">		if (con == null) {</span>
+<span class="fc" id="L275">			return Optional.empty();</span>
+		}
+		try{
+<span class="fc" id="L278">			CallableStatement cb = con.prepareCall(&quot;call viewSuperUser(?, ?, ?)&quot;);</span>
+			//(username_INPUT varchar2, superuser_ID_OUTPUT out number, password_OUTPUT out varchar2)
+<span class="fc" id="L280">			cb.setString(1, username);</span>
+<span class="fc" id="L281">			cb.registerOutParameter(2, java.sql.Types.NUMERIC);</span>
+<span class="fc" id="L282">			cb.registerOutParameter(3, java.sql.Types.VARCHAR);</span>
+<span class="fc" id="L283">			cb.execute();</span>
+			
+<span class="fc bfc" id="L285" title="All 2 branches covered.">			if (cb.getString(2) == null) {</span>
+<span class="fc" id="L286">				cb.close();</span>
+<span class="fc" id="L287">				throw new SQLException(&quot;SuperUserID does not exist in database.&quot;);</span>
+			}
+<span class="fc" id="L289">			log.traceExit(&quot;Successfully returned non null superuser&quot;);</span>
+<span class="fc" id="L290">			return Optional.of(new SuperUser(cb.getInt(2), username, cb.getString(3)));</span>
+<span class="fc" id="L291">		} catch (SQLException e) {</span>
+<span class="fc" id="L292">			log.traceExit(e.getMessage());</span>
+		}
+		
+<span class="fc" id="L295">		log.traceExit(&quot;SQL Exception when trying to view a SuperUser&quot;);</span>
+<span class="fc" id="L296">		return Optional.empty();</span>
+	}
+
+	@Override
+	public Optional&lt;SuperUser&gt; createSuperUser(String username, String password) {
+<span class="fc" id="L301">		log.traceEntry();</span>
+<span class="fc" id="L302">		Connection con = ConnectionUtil.getConnection();</span>
+<span class="fc" id="L303">		int userID = 0;</span>
+		
+<span class="fc bfc" id="L305" title="All 2 branches covered.">		if (con == null) {</span>
+<span class="fc" id="L306">			return Optional.empty();</span>
+		}
+		
+		try {
+<span class="fc" id="L310">			CallableStatement cb = con.prepareCall(&quot;call addSuperUser(?, ?, ?)&quot;);</span>
+<span class="fc" id="L311">			cb.setString(1, username);</span>
+<span class="fc" id="L312">			cb.setString(2,password);</span>
+<span class="fc" id="L313">			cb.registerOutParameter(3, java.sql.Types.NUMERIC);</span>
+<span class="nc" id="L314">			cb.execute();</span>
+<span class="nc" id="L315">			userID = cb.getInt(3);</span>
+			
+<span class="nc" id="L317">			log.traceExit(&quot;Successfully inserted &quot; + username + &quot; into SuperUsers&quot;);</span>
+<span class="nc" id="L318">			return Optional.of(new SuperUser(userID, username, password));</span>
+			
+<span class="fc" id="L320">		} catch (SQLException e) {</span>
+<span class="fc" id="L321">			log.traceExit(e.getMessage());</span>
+		}
+<span class="fc" id="L323">		log.traceExit(&quot;Failed to add new superuser due to duplicate username or SQL exception&quot;);</span>
+<span class="fc" id="L324">		return Optional.empty();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
